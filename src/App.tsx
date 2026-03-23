@@ -12,6 +12,7 @@ import WhatsAppButton from "./components/WhatsAppButton";
 import ScrollToTop from "./components/ScrollToTop";
 import HomePage from "./pages/HomePage";
 import CategoriesPage from "./pages/CategoriesPage";
+import ProductPage from "./pages/ProductPage";
 import LoungePage from "./pages/LoungePage";
 import MemberSignUpPage from "./pages/MemberSignUpPage";
 import ContactPage from "./pages/ContactPage";
@@ -39,6 +40,8 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/categories" element={<CategoriesPage />} />
+                <Route path="/categories/:category" element={<CategoriesPage />} />
+                <Route path="/product/:slug" element={<ProductPage />} />
                 <Route path="/lounge" element={<LoungePage />} />
                 <Route path="/member-sign-up-page" element={<MemberSignUpPage />} />
                 <Route path="/contact" element={<ContactPage />} />
