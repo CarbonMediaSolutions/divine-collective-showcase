@@ -97,26 +97,8 @@ const HomePage = () => {
             Our Best Sellers
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {products.map((p) => (
-              <div
-                key={p.name}
-                className="group cursor-pointer transition-transform duration-200 hover:-translate-y-1"
-              >
-                <div className="bg-product-placeholder w-full aspect-[3/4] mb-4" />
-                <p className="text-primary uppercase text-xs tracking-[2px] font-semibold mb-1">
-                  {p.category}
-                </p>
-                <h3 className="font-serif text-primary font-bold text-base mb-1 leading-snug">
-                  {p.name}
-                </h3>
-                <p className="text-primary font-bold text-lg mb-2">{p.price}</p>
-                <Link
-                  to="/categories"
-                  className="text-primary text-xs uppercase tracking-[2px] underline font-semibold hover:no-underline"
-                >
-                  SHOP NOW
-                </Link>
-              </div>
+            {bestSellers.map((p) => p && (
+              <ProductCard key={p.id} product={p} />
             ))}
           </div>
         </div>
