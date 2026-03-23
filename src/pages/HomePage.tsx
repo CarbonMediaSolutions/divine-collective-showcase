@@ -1,18 +1,8 @@
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
 import { products as allProducts } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
-
-const bestSellerSlugs = [
-  "daily-slap-indoor",
-  "panama-punch",
-  "grape-gummmies-411",
-  "beaker-glass-bong-wpc368-american-purple",
-];
-
-const bestSellers = bestSellerSlugs
-  .map((slug) => allProducts.find((p) => p.slug.includes(slug)))
-  .filter(Boolean);
 
 const bulletPoints = [
   "Uncompromising Quality",
@@ -22,6 +12,13 @@ const bulletPoints = [
 ];
 
 const HomePage = () => {
+  const bestSellers = useMemo(() => {
+    const slugs = ["daily-slap-487", "panama-punch", "grape-gummmies-411", "beaker-glass-bong-wpc368-american-purple"];
+    return slugs
+      .map((s) => allProducts.find((p) => p.slug.includes(s)))
+      .filter((p): p is NonNullable<typeof p> => p != null);
+  }, []);
+
   return (
     <div>
       {/* Hero Section */}
