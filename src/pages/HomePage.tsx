@@ -3,6 +3,9 @@ import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
 import { products as allProducts } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
+import gallery1 from "@/assets/gallery-1.webp";
+import gallery2 from "@/assets/gallery-2.webp";
+import gallery3 from "@/assets/gallery-3.webp";
 
 const bulletPoints = [
   "Uncompromising Quality",
@@ -22,7 +25,15 @@ const HomePage = () => {
   return (
     <div>
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center" style={{ backgroundColor: "#1a2e1a" }}>
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          src="/videos/hero.mp4"
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 to-black/40" />
         <div className="relative z-10 text-center px-5 max-w-3xl">
           <h1 className="text-primary-foreground font-serif font-bold text-[30px] md:text-[50px] leading-tight mb-6">
@@ -40,7 +51,16 @@ const HomePage = () => {
       {/* About Section */}
       <section id="about" className="section-padding bg-background">
         <div className="container-main grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div className="bg-dark-placeholder w-full" style={{ height: 400 }} />
+          <div className="w-full overflow-hidden rounded-sm" style={{ height: 400 }}>
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="w-full h-full object-cover"
+              src="/videos/about.mp4"
+            />
+          </div>
           <div>
             <p className="section-label mb-3">GET TO KNOW US</p>
             <h2 className="section-heading mb-6">About The Divine Collective</h2>
@@ -64,7 +84,6 @@ const HomePage = () => {
 
       {/* Lounge Banner */}
       <section className="section-padding relative overflow-hidden" style={{ backgroundColor: "#08140e" }}>
-        {/* Decorative circles */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full border border-primary/40" />
           <div className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full border border-primary/30" />
@@ -104,7 +123,16 @@ const HomePage = () => {
       {/* Why Choose Us */}
       <section className="section-padding bg-background">
         <div className="container-main grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div className="bg-dark-placeholder w-full order-2 md:order-1" style={{ height: 400 }} />
+          <div className="w-full overflow-hidden rounded-sm order-2 md:order-1" style={{ height: 400 }}>
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="w-full h-full object-cover"
+              src="/videos/why-choose.mp4"
+            />
+          </div>
           <div className="order-1 md:order-2">
             <p className="section-label mb-3">OUR MISSION</p>
             <h2 className="section-heading mb-6">Why Choose Us</h2>
@@ -149,9 +177,13 @@ const HomePage = () => {
             </div>
           </div>
           {/* Gallery images */}
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="border-2 border-primary">
-              <div className="bg-dark-placeholder w-full" style={{ height: 350 }} />
+          {[gallery1, gallery2, gallery3].map((img, i) => (
+            <div key={i} className="border-2 border-primary overflow-hidden">
+              <img
+                src={img}
+                alt={`Gallery ${i + 1}`}
+                className="w-full h-[350px] object-cover"
+              />
             </div>
           ))}
         </div>
