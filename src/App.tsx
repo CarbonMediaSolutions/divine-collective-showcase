@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -29,9 +29,9 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        {!ageVerified && <AgeVerification onVerified={() => setAgeVerified(true)} />}
-        <div className={ageVerified ? "" : "hidden"}>
-          <BrowserRouter>
+        <BrowserRouter>
+          {!ageVerified && <AgeVerification onVerified={() => setAgeVerified(true)} />}
+          <div className={ageVerified ? "" : "hidden"}>
             <ScrollToTop />
             <TopBar />
             <Header />
@@ -47,8 +47,8 @@ const App = () => {
             </main>
             <Footer />
             <WhatsAppButton />
-          </BrowserRouter>
-        </div>
+          </div>
+        </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
   );
