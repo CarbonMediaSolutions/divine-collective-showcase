@@ -1,18 +1,8 @@
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
 import { products as allProducts } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
-
-const bestSellerSlugs = [
-  "daily-slap-indoor",
-  "panama-punch",
-  "grape-gummmies-411",
-  "beaker-glass-bong-wpc368-american-purple",
-];
-
-const bestSellers = bestSellerSlugs
-  .map((slug) => allProducts.find((p) => p.slug.includes(slug)))
-  .filter(Boolean);
 
 const bulletPoints = [
   "Uncompromising Quality",
