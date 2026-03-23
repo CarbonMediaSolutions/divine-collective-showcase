@@ -12,6 +12,13 @@ const bulletPoints = [
 ];
 
 const HomePage = () => {
+  const bestSellers = useMemo(() => {
+    const slugs = ["daily-slap-487", "panama-punch", "grape-gummmies-411", "beaker-glass-bong-wpc368-american-purple"];
+    return slugs
+      .map((s) => allProducts.find((p) => p.slug.includes(s)))
+      .filter((p): p is NonNullable<typeof p> => p != null);
+  }, []);
+
   return (
     <div>
       {/* Hero Section */}
