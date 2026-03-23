@@ -12,6 +12,7 @@ import WhatsAppButton from "./components/WhatsAppButton";
 import ScrollToTop from "./components/ScrollToTop";
 import HomePage from "./pages/HomePage";
 import CategoriesPage from "./pages/CategoriesPage";
+import ProductPage from "./pages/ProductPage";
 import LoungePage from "./pages/LoungePage";
 import MemberSignUpPage from "./pages/MemberSignUpPage";
 import ContactPage from "./pages/ContactPage";
