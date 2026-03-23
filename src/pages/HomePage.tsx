@@ -1,12 +1,18 @@
 import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
+import { products as allProducts } from "@/data/products";
+import ProductCard from "@/components/ProductCard";
 
-const products = [
-  { category: "Pre-rolls", name: "Daily Slap Indoor", price: "R150.00" },
-  { category: "Flower", name: "Panama Punch", price: "R100.00" },
-  { category: "Edibles", name: "Grape Gummies", price: "R250.00" },
-  { category: "Puff Co", name: "Beaker Glass Bong WPC368 American Purple", price: "R1699.00" },
+const bestSellerSlugs = [
+  "daily-slap-indoor",
+  "panama-punch",
+  "grape-gummmies-411",
+  "beaker-glass-bong-wpc368-american-purple",
 ];
+
+const bestSellers = bestSellerSlugs
+  .map((slug) => allProducts.find((p) => p.slug.includes(slug)))
+  .filter(Boolean);
 
 const bulletPoints = [
   "Uncompromising Quality",
