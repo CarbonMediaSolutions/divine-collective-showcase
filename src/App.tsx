@@ -24,6 +24,8 @@ import MembershipCheckoutPage from "./pages/MembershipCheckoutPage";
 import MembershipSuccessPage from "./pages/MembershipSuccessPage";
 import MyMembershipPage from "./pages/MyMembershipPage";
 import CheckoutPage from "./pages/CheckoutPage";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage";
+import PaymentCancelledPage from "./pages/PaymentCancelledPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
