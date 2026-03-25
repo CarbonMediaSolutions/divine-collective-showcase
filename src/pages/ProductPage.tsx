@@ -1,6 +1,8 @@
 import { useParams, Link } from "react-router-dom";
 import { getProductBySlug, getRelatedProducts } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
+import { useCart } from "@/contexts/CartContext";
+import { toast } from "sonner";
 
 const ProductPage = () => {
   const { slug } = useParams<{ slug: string }>();
