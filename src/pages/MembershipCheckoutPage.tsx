@@ -1,7 +1,6 @@
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { Check, Lock, Upload, AlertTriangle, FileText } from "lucide-react";
-import { useMembership } from "@/contexts/MembershipContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const benefits = [
   "Full access to our online store",
