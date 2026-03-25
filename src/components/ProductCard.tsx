@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import { useCart } from "@/contexts/CartContext";
+import { toast } from "sonner";
 import type { Product } from "@/data/products";
 
 interface ProductCardProps {
@@ -6,6 +8,25 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
+  const { addToCart } = useCart();
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const price = product.salePrice !== null && product.salePrice < product.price ? product.salePrice : product.price;
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price,
+      category: product.category,
+      image: product.image,
+    });
+    toast.success(`${product.name} added to cart`, {
+      duration: 2000,
+      style: { background: "hsl(153, 82%, 18%)", color: "white", border: "none" },
+    });
+  };
+
   return (
     <Link
       to={`/product/${product.slug}`}
@@ -45,9 +66,12 @@ const ProductCard = ({ product }: ProductCardProps) => {
           </span>
         )}
       </div>
-      <span className="text-primary text-xs uppercase tracking-[2px] underline font-semibold group-hover:no-underline">
-        SHOP NOW
-      </span>
+      <button
+        onClick={handleAddToCart}
+        className="text-primary text-xs uppercase tracking-[2px] underline font-semibold group-hover:no-underline"
+      >
+        ADD TO CART
+      </button>
     </Link>
   );
 };

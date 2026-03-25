@@ -1,9 +1,12 @@
 import { useParams, Link } from "react-router-dom";
 import { getProductBySlug, getRelatedProducts } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
+import { useCart } from "@/contexts/CartContext";
+import { toast } from "sonner";
 
 const ProductPage = () => {
   const { slug } = useParams<{ slug: string }>();
+  const { addToCart } = useCart();
   const product = slug ? getProductBySlug(slug) : undefined;
 
   if (!product) {
@@ -125,7 +128,22 @@ const ProductPage = () => {
             )}
 
             {/* CTA Button */}
-            <button className="btn-pill-green w-full sm:w-auto">
+            <button
+              className="btn-pill-green w-full sm:w-auto"
+              onClick={() => {
+                addToCart({
+                  id: product.id,
+                  name: product.name,
+                  price: displayPrice,
+                  category: product.category,
+                  image: product.image,
+                });
+                toast.success(`${product.name} added to cart`, {
+                  duration: 2000,
+                  style: { background: "hsl(153, 82%, 18%)", color: "white", border: "none" },
+                });
+              }}
+            >
               ADD TO CART
             </button>
           </div>
