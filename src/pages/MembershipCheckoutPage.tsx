@@ -41,11 +41,10 @@ function formatDateStr(date: Date): string {
 }
 
 const MembershipCheckoutPage = () => {
-  const navigate = useNavigate();
-  const { purchaseMembership } = useMembership();
   const [loading, setLoading] = useState(false);
+  const [payError, setPayError] = useState("");
   const [form, setForm] = useState({
-    name: "", email: "", phone: "", card: "", expiry: "", cvv: "",
+    name: "", email: "", phone: "",
     idType: "sa_id" as IdType, idNumber: "", dob: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
