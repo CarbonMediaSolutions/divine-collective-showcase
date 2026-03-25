@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 const ProductPage = () => {
   const { slug } = useParams<{ slug: string }>();
+  const { addToCart } = useCart();
   const product = slug ? getProductBySlug(slug) : undefined;
 
   if (!product) {
