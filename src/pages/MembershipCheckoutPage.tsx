@@ -99,7 +99,7 @@ const MembershipCheckoutPage = () => {
     if (file) setIdFile(file);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (underage) return;
 
     const newErrors: Record<string, string> = {};
@@ -107,47 +107,57 @@ const MembershipCheckoutPage = () => {
     if (!form.email.trim()) newErrors.email = "Email is required";
     if (!form.phone.trim()) newErrors.phone = "Phone number is required";
 
-    // ID verification
     if (form.idType === "sa_id") {
       if (form.idNumber.length !== 13) newErrors.idNumber = "A valid 13-digit SA ID number is required";
       else {
         const dob = parseSaIdDob(form.idNumber);
         if (!dob) newErrors.idNumber = "Invalid ID number — could not extract date of birth";
-        else if (calculateAge(dob) < 18) {
-          setUnderage(true);
-          return;
-        }
+        else if (calculateAge(dob) < 18) { setUnderage(true); return; }
       }
     } else {
       if (!form.dob) newErrors.dob = "Date of birth is required";
       else {
         const dob = new Date(form.dob);
         if (isNaN(dob.getTime())) newErrors.dob = "Invalid date of birth";
-        else if (calculateAge(dob) < 18) {
-          setUnderage(true);
-          return;
-        }
+        else if (calculateAge(dob) < 18) { setUnderage(true); return; }
       }
     }
 
     if (!idFile) newErrors.idFile = "Please upload a copy of your ID or passport";
 
-    // Payment
-    if (form.card.replace(/\s/g, "").length < 16) newErrors.card = "Valid card number required";
-    if (form.expiry.length < 5) newErrors.expiry = "Valid expiry required";
-    if (form.cvv.length < 3) newErrors.cvv = "Valid CVV required";
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
 
     setErrors({});
     setLoading(true);
-    setTimeout(() => {
-      purchaseMembership();
-      navigate("/membership-success");
-    }, 1500);
+    setPayError("");
+
+    const origin = window.location.origin;
+
+    try {
+      const { data, error } = await supabase.functions.invoke("create-bobpay-payment", {
+        body: {
+          amount: 100,
+          item_name: "Divine Collective Membership - 3 Months",
+          email: form.email,
+          phone_number: form.phone,
+          payment_type: "membership",
+          success_url: `${origin}/payment-success?type=membership`,
+          cancel_url: `${origin}/payment-cancelled?type=membership`,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        setPayError("Could not create payment link. Please try again.");
+        setLoading(false);
+      }
+    } catch (e: any) {
+      console.error("BobPay error:", e);
+      setPayError(e.message || "Payment failed. Please try again.");
+      setLoading(false);
+    }
   };
 
   const inputClass = "w-full bg-transparent border-b border-primary/30 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors";
