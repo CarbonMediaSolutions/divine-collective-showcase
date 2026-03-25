@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, ChevronDown } from "lucide-react";
 import Logo from "./Logo";
+import { useMembership } from "@/contexts/MembershipContext";
 
 const leftLinks = [
   { label: "ABOUT", to: "/#about" },
@@ -16,6 +17,7 @@ const rightLinks = [
 const Header = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [memberDropdown, setMemberDropdown] = useState(false);
+  const { isMember } = useMembership();
 
   const handleNavClick = (to: string) => {
     setMobileOpen(false);
@@ -24,6 +26,9 @@ const Header = () => {
       if (el) el.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  const memberLink = isMember ? "/my-membership" : "/member-sign-up-page";
+  const memberLabel = isMember ? "MY MEMBERSHIP" : "BECOME A MEMBER";
 
   return (
     <header className="sticky top-0 z-50 bg-background" style={{ boxShadow: "0 1px 0 rgba(0,0,0,0.1)" }}>
@@ -55,10 +60,11 @@ const Header = () => {
             </Link>
           ))}
           <div className="relative" onMouseEnter={() => setMemberDropdown(true)} onMouseLeave={() => setMemberDropdown(false)}>
-            <Link to="/member-sign-up-page" className="nav-link flex items-center gap-1">
-              BECOME A MEMBER <ChevronDown size={12} />
+            <Link to={memberLink} className="nav-link flex items-center gap-1">
+              {isMember && <span className="w-2 h-2 rounded-full bg-primary mr-1" />}
+              {memberLabel} {!isMember && <ChevronDown size={12} />}
             </Link>
-            {memberDropdown && (
+            {memberDropdown && !isMember && (
               <div className="absolute top-full right-0 mt-1 bg-background border border-primary/20 rounded-sm py-2 px-4 min-w-[200px] animate-fade-in">
                 <Link to="/member-sign-up-page" className="nav-link block py-2 text-[11px]">
                   Membership Dashboard
@@ -89,8 +95,9 @@ const Header = () => {
                 {l.label}
               </Link>
             ))}
-            <Link to="/member-sign-up-page" className="nav-link" onClick={() => setMobileOpen(false)}>
-              BECOME A MEMBER
+            <Link to={memberLink} className="nav-link flex items-center gap-1" onClick={() => setMobileOpen(false)}>
+              {isMember && <span className="w-2 h-2 rounded-full bg-primary mr-1" />}
+              {memberLabel}
             </Link>
           </div>
         </div>
