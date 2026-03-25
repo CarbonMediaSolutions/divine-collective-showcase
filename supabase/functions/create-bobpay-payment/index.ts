@@ -52,7 +52,7 @@ serve(async (req) => {
 
     console.log('Calling BobPay API with:', JSON.stringify(bobPayBody));
 
-    const response = await fetch('https://api.sandbox.bobpay.co.za/payments/intents/link', {
+    const response = await fetch('https://api.sandbox.bobpay.co.za/v2/payment-links', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
