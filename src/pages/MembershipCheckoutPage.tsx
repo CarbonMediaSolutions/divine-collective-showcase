@@ -280,36 +280,21 @@ const MembershipCheckoutPage = () => {
                 {errors.idFile && <p className="text-destructive text-xs mt-1">{errors.idFile}</p>}
               </div>
 
-              {/* Payment Details */}
-              <div className="pt-4">
-                <p className="text-xs text-muted-foreground uppercase tracking-[2px] mb-4">Payment Details</p>
-              </div>
-
-              <div>
-                <input className={inputClass} placeholder="1234 5678 9012 3456" value={form.card} onChange={(e) => setForm({ ...form, card: formatCard(e.target.value) })} />
-                {errors.card && <p className="text-destructive text-xs mt-1">{errors.card}</p>}
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <input className={inputClass} placeholder="MM/YY" value={form.expiry} onChange={(e) => setForm({ ...form, expiry: formatExpiry(e.target.value) })} />
-                  {errors.expiry && <p className="text-destructive text-xs mt-1">{errors.expiry}</p>}
-                </div>
-                <div>
-                  <input className={inputClass} placeholder="123" maxLength={3} value={form.cvv} onChange={(e) => setForm({ ...form, cvv: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
-                  {errors.cvv && <p className="text-destructive text-xs mt-1">{errors.cvv}</p>}
-                </div>
-              </div>
             </div>
+
+            {payError && (
+              <p className="text-destructive text-sm mt-4">{payError}</p>
+            )}
 
             <button
               onClick={handleSubmit}
               disabled={loading || underage}
               className="btn-pill-green w-full py-4 text-sm mt-8 disabled:opacity-60"
             >
-              {loading ? "PROCESSING..." : "PAY R100 — ACTIVATE MEMBERSHIP"}
+              {loading ? "CREATING PAYMENT LINK..." : "PAY R100 WITH BOBPAY"}
             </button>
             <p className="text-center text-muted-foreground text-xs mt-3 flex items-center justify-center gap-1">
-              <Lock size={12} /> Secure mock payment. No real card is charged.
+              <Lock size={12} /> You'll be redirected to BobPay to complete payment securely.
             </p>
           </div>
 
