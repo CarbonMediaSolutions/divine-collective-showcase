@@ -1,7 +1,6 @@
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { Check, Lock, Upload, AlertTriangle, FileText } from "lucide-react";
-import { useMembership } from "@/contexts/MembershipContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const benefits = [
   "Full access to our online store",
@@ -42,11 +41,10 @@ function formatDateStr(date: Date): string {
 }
 
 const MembershipCheckoutPage = () => {
-  const navigate = useNavigate();
-  const { purchaseMembership } = useMembership();
   const [loading, setLoading] = useState(false);
+  const [payError, setPayError] = useState("");
   const [form, setForm] = useState({
-    name: "", email: "", phone: "", card: "", expiry: "", cvv: "",
+    name: "", email: "", phone: "",
     idType: "sa_id" as IdType, idNumber: "", dob: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -101,7 +99,7 @@ const MembershipCheckoutPage = () => {
     if (file) setIdFile(file);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (underage) return;
 
     const newErrors: Record<string, string> = {};
@@ -109,47 +107,57 @@ const MembershipCheckoutPage = () => {
     if (!form.email.trim()) newErrors.email = "Email is required";
     if (!form.phone.trim()) newErrors.phone = "Phone number is required";
 
-    // ID verification
     if (form.idType === "sa_id") {
       if (form.idNumber.length !== 13) newErrors.idNumber = "A valid 13-digit SA ID number is required";
       else {
         const dob = parseSaIdDob(form.idNumber);
         if (!dob) newErrors.idNumber = "Invalid ID number — could not extract date of birth";
-        else if (calculateAge(dob) < 18) {
-          setUnderage(true);
-          return;
-        }
+        else if (calculateAge(dob) < 18) { setUnderage(true); return; }
       }
     } else {
       if (!form.dob) newErrors.dob = "Date of birth is required";
       else {
         const dob = new Date(form.dob);
         if (isNaN(dob.getTime())) newErrors.dob = "Invalid date of birth";
-        else if (calculateAge(dob) < 18) {
-          setUnderage(true);
-          return;
-        }
+        else if (calculateAge(dob) < 18) { setUnderage(true); return; }
       }
     }
 
     if (!idFile) newErrors.idFile = "Please upload a copy of your ID or passport";
 
-    // Payment
-    if (form.card.replace(/\s/g, "").length < 16) newErrors.card = "Valid card number required";
-    if (form.expiry.length < 5) newErrors.expiry = "Valid expiry required";
-    if (form.cvv.length < 3) newErrors.cvv = "Valid CVV required";
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
 
     setErrors({});
     setLoading(true);
-    setTimeout(() => {
-      purchaseMembership();
-      navigate("/membership-success");
-    }, 1500);
+    setPayError("");
+
+    const origin = window.location.origin;
+
+    try {
+      const { data, error } = await supabase.functions.invoke("create-bobpay-payment", {
+        body: {
+          amount: 100,
+          item_name: "Divine Collective Membership - 3 Months",
+          email: form.email,
+          phone_number: form.phone,
+          payment_type: "membership",
+          success_url: `${origin}/payment-success?type=membership`,
+          cancel_url: `${origin}/payment-cancelled?type=membership`,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        setPayError("Could not create payment link. Please try again.");
+        setLoading(false);
+      }
+    } catch (e: any) {
+      console.error("BobPay error:", e);
+      setPayError(e.message || "Payment failed. Please try again.");
+      setLoading(false);
+    }
   };
 
   const inputClass = "w-full bg-transparent border-b border-primary/30 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors";
@@ -272,36 +280,21 @@ const MembershipCheckoutPage = () => {
                 {errors.idFile && <p className="text-destructive text-xs mt-1">{errors.idFile}</p>}
               </div>
 
-              {/* Payment Details */}
-              <div className="pt-4">
-                <p className="text-xs text-muted-foreground uppercase tracking-[2px] mb-4">Payment Details</p>
-              </div>
-
-              <div>
-                <input className={inputClass} placeholder="1234 5678 9012 3456" value={form.card} onChange={(e) => setForm({ ...form, card: formatCard(e.target.value) })} />
-                {errors.card && <p className="text-destructive text-xs mt-1">{errors.card}</p>}
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <input className={inputClass} placeholder="MM/YY" value={form.expiry} onChange={(e) => setForm({ ...form, expiry: formatExpiry(e.target.value) })} />
-                  {errors.expiry && <p className="text-destructive text-xs mt-1">{errors.expiry}</p>}
-                </div>
-                <div>
-                  <input className={inputClass} placeholder="123" maxLength={3} value={form.cvv} onChange={(e) => setForm({ ...form, cvv: e.target.value.replace(/\D/g, "").slice(0, 3) })} />
-                  {errors.cvv && <p className="text-destructive text-xs mt-1">{errors.cvv}</p>}
-                </div>
-              </div>
             </div>
+
+            {payError && (
+              <p className="text-destructive text-sm mt-4">{payError}</p>
+            )}
 
             <button
               onClick={handleSubmit}
               disabled={loading || underage}
               className="btn-pill-green w-full py-4 text-sm mt-8 disabled:opacity-60"
             >
-              {loading ? "PROCESSING..." : "PAY R100 — ACTIVATE MEMBERSHIP"}
+              {loading ? "CREATING PAYMENT LINK..." : "PAY R100 WITH BOBPAY"}
             </button>
             <p className="text-center text-muted-foreground text-xs mt-3 flex items-center justify-center gap-1">
-              <Lock size={12} /> Secure mock payment. No real card is charged.
+              <Lock size={12} /> You'll be redirected to BobPay to complete payment securely.
             </p>
           </div>
 

@@ -24,6 +24,8 @@ import MembershipCheckoutPage from "./pages/MembershipCheckoutPage";
 import MembershipSuccessPage from "./pages/MembershipSuccessPage";
 import MyMembershipPage from "./pages/MyMembershipPage";
 import CheckoutPage from "./pages/CheckoutPage";
+import PaymentSuccessPage from "./pages/PaymentSuccessPage";
+import PaymentCancelledPage from "./pages/PaymentCancelledPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,6 +63,8 @@ const App = () => {
                     <Route path="/membership-success" element={<MembershipSuccessPage />} />
                     <Route path="/my-membership" element={<MyMembershipPage />} />
                     <Route path="/checkout" element={<CheckoutPage />} />
+                    <Route path="/payment-success" element={<PaymentSuccessPage />} />
+                    <Route path="/payment-cancelled" element={<PaymentCancelledPage />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </main>
