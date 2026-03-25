@@ -1,54 +1,67 @@
 
 
-## Plan: Build Shop & Product Pages from CSV Data
+# BobPay Sandbox Integration Plan
 
-### Overview
-Parse the WooCommerce CSV export, create a static product data file, rebuild the Categories/Shop page with real products, and add individual product detail pages. Match the existing site design (reference screenshot shows breadcrumb, 4-col grid, sort dropdown, product cards with images and prices).
+## Summary
+Integrate BobPay's sandbox payment links for both membership purchases (R100) and product checkout. An edge function will securely call the BobPay API and return a payment URL that the user is redirected to.
 
-### Data Extraction Strategy
-From the CSV (~502 rows), extract only published products (Published=1) with these fields:
-- **id**, **name**, **price** (Regular price column), **salePrice** (Sale price), **category** (parsed from hierarchical Categories field like "Edibles > Gummies"), **image** (first URL from Images column), **description** (clean HTML from Short description or Description), **inStock**, **sku**
+**BobPay Sandbox API**: `https://api.sandbox.bobpay.co.za`
+**Recipient Account Code**: `DIV001`
+**API Key**: Will be stored as a runtime secret `BOBPAY_API_KEY`
 
-Normalize categories into: **Edibles**, **Flowers**, **Accessories**, **Vape Products**, **Preroll**, **Drinks**, **Uncategorized** (and subcategories for filtering).
+## What Changes
 
-Products with Published=-1 will be excluded. Products with no category or "Uncategorized" will be assigned to a general category.
+### 1. Enable Lovable Cloud & Store Secret
+- Enable Lovable Cloud (required for edge functions)
+- Store `BOBPAY_API_KEY` = `110769dbe9024c44b5338cb700915ae3` as a runtime secret
 
-### Files to Create/Modify
+### 2. Create Edge Function: `create-bobpay-payment`
+- Accepts: `amount`, `item_name`, `email`, `phone_number`, `payment_type` (membership / order)
+- Generates a unique `custom_payment_id`
+- Calls `POST https://api.sandbox.bobpay.co.za/payments/intents/link` with:
+  - `recipient_account_code`: `"DIV001"`
+  - `success_url`: site URL + `/payment-success?type={payment_type}&ref={custom_payment_id}`
+  - `cancel_url`: site URL + `/payment-cancelled?type={payment_type}`
+- Returns the BobPay payment URL to the frontend
+- Includes CORS headers and input validation
 
-1. **`src/data/products.ts`** — Static typed product array exported from parsed CSV data. Each product has: `id, slug, name, price, salePrice, category, subcategory, image, description, inStock, sku`. Slugs generated from names for URL routing.
+### 3. Update Membership Checkout Page
+- Keep identity verification (SA ID / passport / age gate / document upload)
+- Remove mock card fields (card number, expiry, CVV)
+- Replace with a single **"PAY R100 WITH BOBPAY"** button
+- On click: validate identity fields → call edge function → redirect to BobPay URL
+- Show loading state while creating payment link
 
-2. **`src/pages/CategoriesPage.tsx`** (rewrite) — Shop landing page matching reference screenshot:
-   - Breadcrumb: Home / Shop
-   - Category filter buttons (All, Edibles, Flowers, Accessories, Vape Products, Preroll)
-   - "Showing X of Y results" count + "Sort by" dropdown (latest, price low-high, price high-low, name A-Z)
-   - 4-col product grid (responsive: 2-col tablet, 1-col mobile)
-   - Each card: product image (from URL or placeholder), name, price (R format), link to product page
-   - Pagination (16 products per page)
+### 4. Update Product Checkout Page
+- Transform placeholder into a shipping details form (name, email, phone, address)
+- Show cart summary with totals
+- **"PAY WITH BOBPAY"** button → calls edge function with cart total → redirects to BobPay
 
-3. **`src/pages/CategoryPage.tsx`** (new) — Filtered view for a single category (route: `/categories/:category`), same layout as shop but pre-filtered.
+### 5. Add Payment Return Pages
+- **`/payment-success`** — reads `type` query param:
+  - If `type=membership`: calls `purchaseMembership()` and shows membership activation confirmation
+  - If `type=order`: clears cart and shows order confirmation
+- **`/payment-cancelled`** — shows cancellation message with "Try Again" link back to the relevant checkout page
 
-4. **`src/pages/ProductPage.tsx`** (new) — Individual product detail page (route: `/product/:slug`):
-   - Breadcrumb: Home / Category / Product Name
-   - Two-column layout: large product image left, details right
-   - Product name (serif heading), price, description, stock status
-   - "Add to Cart" style button (non-functional, frontend showcase)
-   - Related products section (same category, 3-4 items)
+### 6. Update Routing (App.tsx)
+- Add routes: `/payment-success`, `/payment-cancelled`
 
-5. **`src/App.tsx`** — Add new routes: `/categories/:category`, `/product/:slug`
+## Technical Details
 
-6. **`src/components/ProductCard.tsx`** (new) — Reusable card component used in shop grid, best sellers, and related products.
+### Edge Function Structure
+```text
+supabase/functions/create-bobpay-payment/index.ts
 
-7. **`src/pages/HomePage.tsx`** — Update Best Sellers section to pull from real product data.
+- CORS headers
+- Input validation (amount > 0, item_name required, payment_type required)
+- POST to BobPay sandbox API with Bearer auth
+- Return { url } on success, { error } on failure
+```
 
-### Technical Details
-
-- Product images use external URLs from thedivinecollective.co.za (hotlinked). Fallback to placeholder div if no image URL.
-- HTML in descriptions will be stripped to plain text for the data file, or rendered safely.
-- Category hierarchy parsing: "Edibles > Gummies" becomes category="Edibles", subcategory="Gummies".
-- URL slugs: kebab-case from product name + id suffix for uniqueness.
-- No backend needed — all data is static in a TypeScript file.
-
-### Estimated Scope
-- ~7 files created/modified
-- ~300-400 published products in the data file
+### Frontend Flow
+```text
+User clicks "Pay" → POST to edge function → receive BobPay URL → window.location.href = url
+→ User pays on BobPay → BobPay redirects to /payment-success?type=...&ref=...
+→ Membership activated or cart cleared
+```
 
