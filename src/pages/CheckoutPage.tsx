@@ -28,6 +28,18 @@ const CheckoutPage = () => {
     const itemNames = items.map(i => `${i.name} x${i.quantity}`).join(", ");
 
     try {
+      // Store pending order for post-payment save
+      localStorage.setItem("pendingOrder", JSON.stringify({
+        customer_name: form.name,
+        email: form.email,
+        phone: form.phone,
+        address: form.address,
+        city: form.city,
+        postal_code: form.postalCode,
+        items: items.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
+        total: cartTotal,
+      }));
+
       const { data, error: fnError } = await supabase.functions.invoke("create-bobpay-payment", {
         body: {
           amount: cartTotal,

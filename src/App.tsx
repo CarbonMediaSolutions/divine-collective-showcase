@@ -72,6 +72,14 @@ const App = () => {
                 <Footer />
                 <WhatsAppButton />
               </div>
+              {/* Admin route outside main layout */}
+              <Routes>
+                <Route path="/admin" element={<AdminPage />} />
+              </Routes>
+                </main>
+                <Footer />
+                <WhatsAppButton />
+              </div>
             </BrowserRouter>
           </MembershipProvider>
         </CartProvider>
