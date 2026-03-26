@@ -11,6 +11,7 @@ interface MembershipContextType {
   checkMembershipByEmail: (email: string) => Promise<boolean>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 const MembershipContext = createContext<MembershipContextType | undefined>(undefined);
 
 const STORAGE_KEY = "divineCollectiveMembership";
