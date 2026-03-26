@@ -1,110 +1,49 @@
 
 
-# Membership System Upgrade Plan
+# Admin Dashboard Plan
 
-## Key Answers First
+## Overview
+Add a password-gated admin section at `/admin` with three tabs: Products, Members, and Sales. Protected by a simple password prompt.
 
-### BobPay Subscriptions
-BobPay's subscription/recurring payments feature is listed as **"Coming soon"** on their website. It is not yet available. This means:
-- Memberships **cannot** be auto-renewed via BobPay right now
-- The current flow (one-time R100 payment for 3 months) is the correct approach
-- When membership expires, the member would need to manually re-purchase
-- We can add expiry reminder emails later if needed
+## Pages & Components
 
-### Form Fields (Matching JoinIt)
+### 1. Admin Login Gate (`src/pages/AdminPage.tsx`)
+- Simple password input screen (hardcoded password check, e.g. "divine2026" — stored in a constant, not localStorage)
+- On correct password, show the admin dashboard
+- Session stored in React state only (refreshing requires re-entry)
 
-From the screenshot, JoinIt collects:
-1. First Name
-2. Last Name
-3. Date of Birth
-4. Phone
-5. ID Number
-6. Upload ID Image (Front)
-7. Upload ID Image (Back)
-8. "Where did you hear about us?"
-9. Terms & Conditions (checkbox)
-10. Marketing Consent (checkbox)
+### 2. Admin Dashboard (inside `AdminPage.tsx`)
+Three tabs using shadcn Tabs component:
 
-The current form has some of these but is missing: last name (separate field), ID back upload, "where did you hear about us", T&C checkbox, marketing consent checkbox.
+**Products Tab**
+- Table listing all ~450 products from `src/data/products.ts`
+- Columns: SKU, Name, Category, Price, Sale Price, In Stock
+- Search/filter by name or category
+- Read-only for now (data is static)
 
-### Existing Members (~1,832 records)
-The CSV contains member data that should be imported into a database table so the system can validate membership status server-side rather than relying on localStorage.
+**Members Tab**
+- Fetches all rows from `public.members` table via Supabase
+- Columns: Name, Email, Phone, ID Number, Status, Joined, Expiry
+- Search by name/email
+- Show active vs expired badge
 
----
+**Sales Tab**
+- Since orders aren't stored in DB yet, create an `orders` table to persist checkout data
+- Migration: `orders` table with columns: id, customer_name, email, phone, items (jsonb), total, status, payment_ref, created_at
+- Update `CheckoutPage` and `PaymentSuccessPage` to save order records
+- Admin shows table of all orders with date, customer, total, status
 
-## Implementation Plan
+### 3. Route
+- Add `/admin` route in `App.tsx` (no header/footer wrapper — clean admin layout)
 
-### 1. Create `members` Database Table
-Store membership data server-side instead of localStorage only.
+### Database Changes
+- New `orders` table with public insert + admin-readable RLS (using public select for simplicity since admin is password-gated client-side)
+- Save order on successful payment callback
 
-```sql
-CREATE TABLE public.members (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  email text,
-  first_name text NOT NULL,
-  last_name text NOT NULL,
-  phone text,
-  id_number text,
-  birthday date,
-  status text DEFAULT 'Pending',
-  joined_date date DEFAULT CURRENT_DATE,
-  expiration_date date,
-  id_front_url text,
-  id_back_url text,
-  referral_source text,
-  terms_accepted boolean DEFAULT false,
-  marketing_consent boolean DEFAULT false,
-  created_at timestamptz DEFAULT now()
-);
-
-ALTER TABLE public.members ENABLE ROW LEVEL SECURITY;
-
--- Public insert (for signup form)
-CREATE POLICY "Anyone can insert members"
-  ON public.members FOR INSERT
-  WITH CHECK (true);
-
--- Public select by email (for membership lookup)
-CREATE POLICY "Anyone can check membership by email"
-  ON public.members FOR SELECT
-  USING (true);
-```
-
-### 2. Create Storage Bucket for ID Uploads
-```sql
-INSERT INTO storage.buckets (id, name, public) VALUES ('id-documents', 'id-documents', false);
-```
-With RLS policy allowing anonymous uploads.
-
-### 3. Update Membership Checkout Form
-Modify `MembershipCheckoutPage.tsx` to match the JoinIt fields:
-- Split "Full Name" into **First Name** and **Last Name**
-- Keep ID Number + age verification logic
-- Add **ID Back upload** (currently only one upload)
-- Add **"Where did you hear about us?"** dropdown/text field
-- Add **Terms & Conditions** checkbox (required)
-- Add **Marketing Consent** checkbox (optional)
-- On successful payment return, save member record to the database
-
-### 4. Import Existing Members
-Create an edge function or migration script to bulk-import the ~1,832 members from the CSV into the `members` table. Key field mapping:
-- `email` → `email`
-- `first_name` → `first_name`
-- `last_name` → `last_name`
-- `phone` → `phone`
-- `birthday` → `birthday`
-- `joined_date` → `joined_date`
-- `expiration_date` → `expiration_date`
-- `status` → `status`
-- `ID Number` (custom field) → `id_number`
-- `Upload Your ID Image (Front)` → `id_front_url`
-- `Upload Your ID Image (Back)` → `id_back_url`
-
-### 5. Update Membership Validation
-Update `MembershipContext` to check membership status from the database (by email/phone) instead of only localStorage. This allows existing JoinIt members to be recognized.
-
-### Technical Notes
-- BobPay does NOT support recurring billing yet — membership remains a manual 3-month purchase
-- The CSV has ~1,832 rows with mixed data quality (some rows missing email, phone, etc.)
-- ID documents will be stored securely in a private storage bucket
+### Files Created/Modified
+- **Create**: `src/pages/AdminPage.tsx` (~300 lines)
+- **Modify**: `src/App.tsx` (add route)
+- **Modify**: `src/pages/PaymentSuccessPage.tsx` (save order to DB)
+- **Modify**: `src/pages/CheckoutPage.tsx` (store pending order in localStorage for post-payment save)
+- **Migration**: Create `orders` table
 
