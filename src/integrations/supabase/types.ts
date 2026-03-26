@@ -14,7 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      members: {
+        Row: {
+          birthday: string | null
+          created_at: string | null
+          email: string | null
+          expiration_date: string | null
+          first_name: string
+          id: string
+          id_back_url: string | null
+          id_front_url: string | null
+          id_number: string | null
+          joined_date: string | null
+          last_name: string
+          marketing_consent: boolean | null
+          phone: string | null
+          referral_source: string | null
+          status: string | null
+          terms_accepted: boolean | null
+        }
+        Insert: {
+          birthday?: string | null
+          created_at?: string | null
+          email?: string | null
+          expiration_date?: string | null
+          first_name: string
+          id?: string
+          id_back_url?: string | null
+          id_front_url?: string | null
+          id_number?: string | null
+          joined_date?: string | null
+          last_name: string
+          marketing_consent?: boolean | null
+          phone?: string | null
+          referral_source?: string | null
+          status?: string | null
+          terms_accepted?: boolean | null
+        }
+        Update: {
+          birthday?: string | null
+          created_at?: string | null
+          email?: string | null
+          expiration_date?: string | null
+          first_name?: string
+          id?: string
+          id_back_url?: string | null
+          id_front_url?: string | null
+          id_number?: string | null
+          joined_date?: string | null
+          last_name?: string
+          marketing_consent?: boolean | null
+          phone?: string | null
+          referral_source?: string | null
+          status?: string | null
+          terms_accepted?: boolean | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
