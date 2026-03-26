@@ -27,6 +27,7 @@ import CheckoutPage from "./pages/CheckoutPage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import PaymentCancelledPage from "./pages/PaymentCancelledPage";
 import NotFound from "./pages/NotFound";
+import AdminPage from "./pages/AdminPage";
 
 const queryClient = new QueryClient();
 
@@ -43,34 +44,41 @@ const App = () => {
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              {!ageVerified && <AgeVerification onVerified={() => setAgeVerified(true)} />}
-              <div className={ageVerified ? "" : "hidden"}>
-                <ScrollToTop />
-                <TopBar />
-                <Header />
-                <main>
-                  <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/categories" element={<CategoriesPage />} />
-                    <Route path="/categories/:category" element={<CategoriesPage />} />
-                    <Route path="/product/:slug" element={<ProductPage />} />
-                    <Route path="/lounge" element={<LoungePage />} />
-                    <Route path="/member-sign-up-page" element={<MemberSignUpPage />} />
-                    <Route path="/contact" element={<ContactPage />} />
-                    <Route path="/cart" element={<CartPage />} />
-                    <Route path="/membership-required" element={<MembershipRequiredPage />} />
-                    <Route path="/membership-checkout" element={<MembershipCheckoutPage />} />
-                    <Route path="/membership-success" element={<MembershipSuccessPage />} />
-                    <Route path="/my-membership" element={<MyMembershipPage />} />
-                    <Route path="/checkout" element={<CheckoutPage />} />
-                    <Route path="/payment-success" element={<PaymentSuccessPage />} />
-                    <Route path="/payment-cancelled" element={<PaymentCancelledPage />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </main>
-                <Footer />
-                <WhatsAppButton />
-              </div>
+              <Routes>
+                <Route path="/admin" element={<AdminPage />} />
+                <Route path="*" element={
+                  <>
+                    {!ageVerified && <AgeVerification onVerified={() => setAgeVerified(true)} />}
+                    <div className={ageVerified ? "" : "hidden"}>
+                      <ScrollToTop />
+                      <TopBar />
+                      <Header />
+                      <main>
+                        <Routes>
+                          <Route path="/" element={<HomePage />} />
+                          <Route path="/categories" element={<CategoriesPage />} />
+                          <Route path="/categories/:category" element={<CategoriesPage />} />
+                          <Route path="/product/:slug" element={<ProductPage />} />
+                          <Route path="/lounge" element={<LoungePage />} />
+                          <Route path="/member-sign-up-page" element={<MemberSignUpPage />} />
+                          <Route path="/contact" element={<ContactPage />} />
+                          <Route path="/cart" element={<CartPage />} />
+                          <Route path="/membership-required" element={<MembershipRequiredPage />} />
+                          <Route path="/membership-checkout" element={<MembershipCheckoutPage />} />
+                          <Route path="/membership-success" element={<MembershipSuccessPage />} />
+                          <Route path="/my-membership" element={<MyMembershipPage />} />
+                          <Route path="/checkout" element={<CheckoutPage />} />
+                          <Route path="/payment-success" element={<PaymentSuccessPage />} />
+                          <Route path="/payment-cancelled" element={<PaymentCancelledPage />} />
+                          <Route path="*" element={<NotFound />} />
+                        </Routes>
+                      </main>
+                      <Footer />
+                      <WhatsAppButton />
+                    </div>
+                  </>
+                } />
+              </Routes>
             </BrowserRouter>
           </MembershipProvider>
         </CartProvider>

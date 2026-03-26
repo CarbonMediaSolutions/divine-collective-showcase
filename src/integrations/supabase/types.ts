@@ -71,6 +71,54 @@ export type Database = {
         }
         Relationships: []
       }
+      orders: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          customer_name: string
+          email: string | null
+          id: string
+          items: Json
+          payment_ref: string | null
+          payment_type: string | null
+          phone: string | null
+          postal_code: string | null
+          status: string
+          total: number
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          customer_name: string
+          email?: string | null
+          id?: string
+          items?: Json
+          payment_ref?: string | null
+          payment_type?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          status?: string
+          total?: number
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          customer_name?: string
+          email?: string | null
+          id?: string
+          items?: Json
+          payment_ref?: string | null
+          payment_type?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          status?: string
+          total?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

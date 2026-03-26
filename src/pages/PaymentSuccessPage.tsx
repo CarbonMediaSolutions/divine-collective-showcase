@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { CheckCircle } from "lucide-react";
 import { useMembership } from "@/contexts/MembershipContext";
 import { useCart } from "@/contexts/CartContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const PaymentSuccessPage = () => {
   const [searchParams] = useSearchParams();
@@ -18,7 +19,38 @@ const PaymentSuccessPage = () => {
 
     if (type === "membership") {
       purchaseMembership();
+      // Save membership order
+      supabase.from("orders").insert({
+        customer_name: "Membership Purchase",
+        total: 100,
+        status: "completed",
+        payment_ref: ref || undefined,
+        payment_type: "membership",
+        items: [{ name: "3-Month Membership", quantity: 1, price: 100 }],
+      }).then(() => {});
     } else if (type === "order") {
+      // Save order from pending data
+      const pending = localStorage.getItem("pendingOrder");
+      if (pending) {
+        try {
+          const order = JSON.parse(pending);
+          supabase.from("orders").insert({
+            customer_name: order.customer_name,
+            email: order.email,
+            phone: order.phone,
+            address: order.address,
+            city: order.city,
+            postal_code: order.postal_code,
+            items: order.items,
+            total: order.total,
+            status: "completed",
+            payment_ref: ref || undefined,
+            payment_type: "order",
+          }).then(() => {
+            localStorage.removeItem("pendingOrder");
+          });
+        } catch {}
+      }
       clearCart();
     }
   }, [type, purchaseMembership, clearCart]);
