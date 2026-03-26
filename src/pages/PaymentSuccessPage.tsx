@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { CheckCircle } from "lucide-react";
 import { useMembership } from "@/contexts/MembershipContext";
 import { useCart } from "@/contexts/CartContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const PaymentSuccessPage = () => {
   const [searchParams] = useSearchParams();
