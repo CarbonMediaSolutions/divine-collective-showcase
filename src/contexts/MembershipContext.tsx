@@ -93,9 +93,23 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  // Fetch member name when email is available
   useEffect(() => {
     checkMembership();
   }, [checkMembership]);
+
+  useEffect(() => {
+    if (memberEmail && !memberName) {
+      supabase
+        .from("members")
+        .select("first_name")
+        .eq("email", memberEmail.toLowerCase().trim())
+        .limit(1)
+        .then(({ data }) => {
+          if (data?.[0]?.first_name) setMemberName(data[0].first_name);
+        });
+    }
+  }, [memberEmail, memberName]);
 
   const purchaseMembership = useCallback(async () => {
     const now = new Date();
