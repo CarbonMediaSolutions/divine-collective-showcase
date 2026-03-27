@@ -13,7 +13,16 @@ interface MembershipContextType {
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
-const MembershipContext = createContext<MembershipContextType | undefined>(undefined);
+const MembershipContext = createContext<MembershipContextType>({
+  isMember: false,
+  membershipExpiry: null,
+  membershipPurchasedAt: null,
+  memberEmail: null,
+  memberName: null,
+  purchaseMembership: () => {},
+  checkMembership: () => {},
+  checkMembershipByEmail: async () => false,
+});
 
 const STORAGE_KEY = "divineCollectiveMembership";
 
