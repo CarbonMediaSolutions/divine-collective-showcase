@@ -58,7 +58,7 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { data, error } = await supabase
         .from("members")
-        .select("status, expiration_date, joined_date")
+        .select("status, expiration_date, joined_date, first_name")
         .eq("email", email.toLowerCase().trim())
         .in("status", ["Active", "Pending"])
         .order("created_at", { ascending: false })
