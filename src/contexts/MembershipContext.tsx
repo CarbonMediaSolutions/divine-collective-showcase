@@ -190,7 +190,5 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useMembership = () => {
-  const ctx = useContext(MembershipContext);
-  if (!ctx) throw new Error("useMembership must be used within MembershipProvider");
-  return ctx;
+  return useContext(MembershipContext);
 };
