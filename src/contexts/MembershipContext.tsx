@@ -86,6 +86,7 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
       setMembershipExpiry(localExpiry);
       setMembershipPurchasedAt(new Date(memberData.purchasedAt));
       setMemberEmail(email);
+      setMemberName(member.first_name || null);
       return true;
     } catch {
       return false;
