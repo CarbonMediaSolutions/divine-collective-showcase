@@ -44,6 +44,7 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
   const [membershipExpiry, setMembershipExpiry] = useState<Date | null>(null);
   const [membershipPurchasedAt, setMembershipPurchasedAt] = useState<Date | null>(null);
   const [memberEmail, setMemberEmail] = useState<string | null>(null);
+  const [memberName, setMemberName] = useState<string | null>(null);
 
   const checkMembership = useCallback(() => {
     const { isMember: active, expiry, purchased, email } = readLocalMembership();
