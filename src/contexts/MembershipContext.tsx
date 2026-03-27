@@ -6,6 +6,7 @@ interface MembershipContextType {
   membershipExpiry: Date | null;
   membershipPurchasedAt: Date | null;
   memberEmail: string | null;
+  memberName: string | null;
   purchaseMembership: () => void;
   checkMembership: () => void;
   checkMembershipByEmail: (email: string) => Promise<boolean>;
@@ -43,6 +44,7 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
   const [membershipExpiry, setMembershipExpiry] = useState<Date | null>(null);
   const [membershipPurchasedAt, setMembershipPurchasedAt] = useState<Date | null>(null);
   const [memberEmail, setMemberEmail] = useState<string | null>(null);
+  const [memberName, setMemberName] = useState<string | null>(null);
 
   const checkMembership = useCallback(() => {
     const { isMember: active, expiry, purchased, email } = readLocalMembership();
@@ -56,7 +58,7 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { data, error } = await supabase
         .from("members")
-        .select("status, expiration_date, joined_date")
+        .select("status, expiration_date, joined_date, first_name")
         .eq("email", email.toLowerCase().trim())
         .in("status", ["Active", "Pending"])
         .order("created_at", { ascending: false })
@@ -84,15 +86,30 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
       setMembershipExpiry(localExpiry);
       setMembershipPurchasedAt(new Date(memberData.purchasedAt));
       setMemberEmail(email);
+      setMemberName(member.first_name || null);
       return true;
     } catch {
       return false;
     }
   }, []);
 
+  // Fetch member name when email is available
   useEffect(() => {
     checkMembership();
   }, [checkMembership]);
+
+  useEffect(() => {
+    if (memberEmail && !memberName) {
+      supabase
+        .from("members")
+        .select("first_name")
+        .eq("email", memberEmail.toLowerCase().trim())
+        .limit(1)
+        .then(({ data }) => {
+          if (data?.[0]?.first_name) setMemberName(data[0].first_name);
+        });
+    }
+  }, [memberEmail, memberName]);
 
   const purchaseMembership = useCallback(async () => {
     const now = new Date();
@@ -157,7 +174,7 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <MembershipContext.Provider value={{ isMember, membershipExpiry, membershipPurchasedAt, memberEmail, purchaseMembership, checkMembership, checkMembershipByEmail }}>
+    <MembershipContext.Provider value={{ isMember, membershipExpiry, membershipPurchasedAt, memberEmail, memberName, purchaseMembership, checkMembership, checkMembershipByEmail }}>
       {children}
     </MembershipContext.Provider>
   );
