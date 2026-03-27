@@ -174,7 +174,7 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <MembershipContext.Provider value={{ isMember, membershipExpiry, membershipPurchasedAt, memberEmail, purchaseMembership, checkMembership, checkMembershipByEmail }}>
+    <MembershipContext.Provider value={{ isMember, membershipExpiry, membershipPurchasedAt, memberEmail, memberName, purchaseMembership, checkMembership, checkMembershipByEmail }}>
       {children}
     </MembershipContext.Provider>
   );
