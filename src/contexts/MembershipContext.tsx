@@ -6,6 +6,7 @@ interface MembershipContextType {
   membershipExpiry: Date | null;
   membershipPurchasedAt: Date | null;
   memberEmail: string | null;
+  memberName: string | null;
   purchaseMembership: () => void;
   checkMembership: () => void;
   checkMembershipByEmail: (email: string) => Promise<boolean>;

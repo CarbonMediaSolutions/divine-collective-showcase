@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Lock, Check } from "lucide-react";
+import { Lock, Check, Loader2 } from "lucide-react";
+import { useMembership } from "@/contexts/MembershipContext";
 
 const benefits = [
   "Full access to our online store",
@@ -10,6 +12,21 @@ const benefits = [
 ];
 
 const MembershipRequiredPage = () => {
+  const { checkMembershipByEmail } = useMembership();
+  const [showLookup, setShowLookup] = useState(false);
+  const [lookupEmail, setLookupEmail] = useState("");
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupResult, setLookupResult] = useState<"found" | "not_found" | null>(null);
+
+  const handleLookup = async () => {
+    if (!lookupEmail.trim()) return;
+    setLookupLoading(true);
+    setLookupResult(null);
+    const found = await checkMembershipByEmail(lookupEmail.trim());
+    setLookupResult(found ? "found" : "not_found");
+    setLookupLoading(false);
+  };
+
   return (
     <div>
       <section className="bg-[hsl(150,40%,6%)] py-20 md:py-28">
@@ -53,8 +70,41 @@ const MembershipRequiredPage = () => {
           <div className="mt-8 text-center">
             <p className="text-primary-foreground/50 text-sm">
               Already a member?{" "}
-              <span className="text-primary-foreground/70 underline cursor-pointer">Sign in here</span>
+              <button
+                onClick={() => setShowLookup(!showLookup)}
+                className="text-primary-foreground/70 underline cursor-pointer hover:text-primary-foreground transition-colors"
+              >
+                Verify here
+              </button>
             </p>
+
+            {showLookup && (
+              <div className="mt-4 bg-card rounded-xl p-5 max-w-[360px] mx-auto text-left">
+                <p className="text-sm text-foreground mb-3">Enter your email to check membership:</p>
+                <input
+                  type="email"
+                  value={lookupEmail}
+                  onChange={(e) => setLookupEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  className="w-full bg-transparent border-b border-primary/30 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+                  onKeyDown={(e) => e.key === "Enter" && handleLookup()}
+                />
+                <button
+                  onClick={handleLookup}
+                  disabled={lookupLoading || !lookupEmail.trim()}
+                  className="btn-pill-green w-full py-3 text-xs mt-3 disabled:opacity-50"
+                >
+                  {lookupLoading ? <Loader2 size={14} className="animate-spin mx-auto" /> : "CHECK MEMBERSHIP"}
+                </button>
+                {lookupResult === "found" && (
+                  <p className="text-primary text-xs mt-2 font-semibold">✓ Membership found! Redirecting to checkout...</p>
+                )}
+                {lookupResult === "not_found" && (
+                  <p className="text-destructive text-xs mt-2">No active membership found for this email.</p>
+                )}
+              </div>
+            )}
+
             <Link to="/cart" className="text-primary-foreground/60 text-sm mt-3 inline-block hover:text-primary-foreground transition-colors">
               ← Return to Cart
             </Link>

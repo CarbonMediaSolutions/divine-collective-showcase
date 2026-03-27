@@ -19,7 +19,7 @@ const MemberSignUpPage = () => {
         <p className="text-primary-foreground/70 text-base mb-10">
           Click the button below to sign up.
         </p>
-        <Link to="/contact" className="btn-pill-white text-lg px-12 py-4">
+        <Link to="/membership-checkout" className="btn-pill-white text-lg px-12 py-4">
           BECOME A MEMBER
         </Link>
       </div>
