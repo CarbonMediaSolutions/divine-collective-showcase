@@ -1,49 +1,51 @@
 
 
-# Admin Dashboard Plan
+# Plan: BobPay Checkout Connection + Classy Membership Page
 
-## Overview
-Add a password-gated admin section at `/admin` with three tabs: Products, Members, and Sales. Protected by a simple password prompt.
+## 1. Connect BobPay to the full e-commerce store
 
-## Pages & Components
+The BobPay integration is already connected for both membership and product checkout flows:
+- **Membership checkout** (`MembershipCheckoutPage.tsx`) calls the `create-bobpay-payment` edge function with `payment_type: "membership"`
+- **Product checkout** (`CheckoutPage.tsx`) calls the same edge function with `payment_type: "order"`
+- **Payment success** (`PaymentSuccessPage.tsx`) handles both types, saving orders to the `orders` table
 
-### 1. Admin Login Gate (`src/pages/AdminPage.tsx`)
-- Simple password input screen (hardcoded password check, e.g. "divine2026" — stored in a constant, not localStorage)
-- On correct password, show the admin dashboard
-- Session stored in React state only (refreshing requires re-entry)
+**What's missing / needs fixing:**
+- The `MemberSignUpPage.tsx` currently links to `/contact` instead of `/membership-checkout` — fix this to route to the actual membership flow
+- The "Renew Membership" button on `MyMembershipPage.tsx` calls `purchaseMembership()` directly (bypassing BobPay) — fix this to redirect to BobPay payment
+- The `MembershipRequiredPage.tsx` "Already a member? Sign in here" is a dead link — wire it to a membership lookup (enter email to check DB)
 
-### 2. Admin Dashboard (inside `AdminPage.tsx`)
-Three tabs using shadcn Tabs component:
+### Changes:
+- **`MemberSignUpPage.tsx`**: Change link from `/contact` to `/membership-checkout`
+- **`MyMembershipPage.tsx`**: Replace `handleRenew` to redirect to BobPay via the edge function (same as membership checkout flow, but for renewal)
+- **`MembershipRequiredPage.tsx`**: Add a simple email lookup modal/section for existing members to verify their membership via `checkMembershipByEmail`
 
-**Products Tab**
-- Table listing all ~450 products from `src/data/products.ts`
-- Columns: SKU, Name, Category, Price, Sale Price, In Stock
-- Search/filter by name or category
-- Read-only for now (data is static)
+---
 
-**Members Tab**
-- Fetches all rows from `public.members` table via Supabase
-- Columns: Name, Email, Phone, ID Number, Status, Joined, Expiry
-- Search by name/email
-- Show active vs expired badge
+## 2. Build a classy membership page (post-login/activation)
 
-**Sales Tab**
-- Since orders aren't stored in DB yet, create an `orders` table to persist checkout data
-- Migration: `orders` table with columns: id, customer_name, email, phone, items (jsonb), total, status, payment_ref, created_at
-- Update `CheckoutPage` and `PaymentSuccessPage` to save order records
-- Admin shows table of all orders with date, customer, total, status
+Redesign `MyMembershipPage.tsx` into a premium, visually rich membership dashboard:
 
-### 3. Route
-- Add `/admin` route in `App.tsx` (no header/footer wrapper — clean admin layout)
+### Design:
+- **Hero banner** at top with dark gradient background, member name greeting ("Welcome back, [First Name]"), and ACTIVE badge
+- **Membership card** styled like a premium card with gold/green accents:
+  - Member since date
+  - Expiry date
+  - Days remaining with elegant circular progress indicator
+  - Member ID (first 8 chars of UUID)
+- **Benefits section** with icon grid showing membership perks
+- **Quick actions**: Shop Now, Visit Lounge, Renew Membership
+- **Order history section**: Fetch from `orders` table and display recent purchases
+- Pull member name from `memberEmail` → query `members` table for first/last name
 
-### Database Changes
-- New `orders` table with public insert + admin-readable RLS (using public select for simplicity since admin is password-gated client-side)
-- Save order on successful payment callback
+### Files modified:
+- **`src/pages/MyMembershipPage.tsx`** — Full redesign (~200 lines)
+- **`src/contexts/MembershipContext.tsx`** — Add `memberName` (first_name) to context, fetched alongside membership check
+- **`src/pages/MemberSignUpPage.tsx`** — Fix CTA link
+- **`src/pages/MembershipRequiredPage.tsx`** — Add email lookup for existing members
 
-### Files Created/Modified
-- **Create**: `src/pages/AdminPage.tsx` (~300 lines)
-- **Modify**: `src/App.tsx` (add route)
-- **Modify**: `src/pages/PaymentSuccessPage.tsx` (save order to DB)
-- **Modify**: `src/pages/CheckoutPage.tsx` (store pending order in localStorage for post-payment save)
-- **Migration**: Create `orders` table
+### Technical notes:
+- Order history fetched via `supabase.from("orders").select().eq("email", memberEmail)` 
+- Renew button creates a BobPay payment link via the edge function and redirects
+- No new database tables or migrations needed
+- All pages remain mobile responsive
 
