@@ -1,51 +1,72 @@
 
 
-# Plan: BobPay Checkout Connection + Classy Membership Page
+# Plan: Digital Wallet Cards, Renewal Fix, Server-Side Verification
 
-## 1. Connect BobPay to the full e-commerce store
+## 1. Digital Wallet Card Preview on /my-membership
 
-The BobPay integration is already connected for both membership and product checkout flows:
-- **Membership checkout** (`MembershipCheckoutPage.tsx`) calls the `create-bobpay-payment` edge function with `payment_type: "membership"`
-- **Product checkout** (`CheckoutPage.tsx`) calls the same edge function with `payment_type: "order"`
-- **Payment success** (`PaymentSuccessPage.tsx`) handles both types, saving orders to the `orders` table
+Since both Apple Wallet (requires Apple Developer cert ~R1,500/yr) and Google Wallet (requires Google Cloud service account) need external credentials that aren't set up yet, we'll implement:
 
-**What's missing / needs fixing:**
-- The `MemberSignUpPage.tsx` currently links to `/contact` instead of `/membership-checkout` — fix this to route to the actual membership flow
-- The "Renew Membership" button on `MyMembershipPage.tsx` calls `purchaseMembership()` directly (bypassing BobPay) — fix this to redirect to BobPay payment
-- The `MembershipRequiredPage.tsx` "Already a member? Sign in here" is a dead link — wire it to a membership lookup (enter email to check DB)
+- A **visual membership card preview** styled as a premium dark-green card (#08512f) with member name, status, valid-until date, and a QR code (using a QR code library encoding the member's email)
+- **"Add to Apple Wallet" button** — shows a toast: "Apple Wallet coming soon"
+- **"Save to Google Wallet" button** — shows a toast: "Google Wallet coming soon — service account setup required"
+- Both buttons use the standard wallet badge styling (black for Apple, white with border for Google)
 
-### Changes:
-- **`MemberSignUpPage.tsx`**: Change link from `/contact` to `/membership-checkout`
-- **`MyMembershipPage.tsx`**: Replace `handleRenew` to redirect to BobPay via the edge function (same as membership checkout flow, but for renewal)
-- **`MembershipRequiredPage.tsx`**: Add a simple email lookup modal/section for existing members to verify their membership via `checkMembershipByEmail`
+When the owner is ready to set up certificates, the edge functions can be wired in behind these buttons.
+
+### Files:
+- **Install**: `qrcode.react` for QR code generation
+- **Modify**: `src/pages/MyMembershipPage.tsx` — add "Your Digital Card" section with card preview + wallet buttons below the benefits grid
 
 ---
 
-## 2. Build a classy membership page (post-login/activation)
+## 2. Fix Renewal Extension Bug
 
-Redesign `MyMembershipPage.tsx` into a premium, visually rich membership dashboard:
+Currently `purchaseMembership()` always sets expiry to today + 90 days. Fix it to extend from the current expiry if still active.
 
-### Design:
-- **Hero banner** at top with dark gradient background, member name greeting ("Welcome back, [First Name]"), and ACTIVE badge
-- **Membership card** styled like a premium card with gold/green accents:
-  - Member since date
-  - Expiry date
-  - Days remaining with elegant circular progress indicator
-  - Member ID (first 8 chars of UUID)
-- **Benefits section** with icon grid showing membership perks
-- **Quick actions**: Shop Now, Visit Lounge, Renew Membership
-- **Order history section**: Fetch from `orders` table and display recent purchases
-- Pull member name from `memberEmail` → query `members` table for first/last name
+### Changes in `src/contexts/MembershipContext.tsx`:
+- Check `readLocalMembership()` for existing active membership
+- If active with future expiry, set new expiry = existing expiry + 90 days
+- If expired or new, set expiry = today + 90 days
+- On renewal (when `pendingMemberData` is absent and email exists), update the existing member row instead of inserting a new one
+- Reset reminder columns when they're added later
 
-### Files modified:
-- **`src/pages/MyMembershipPage.tsx`** — Full redesign (~200 lines)
-- **`src/contexts/MembershipContext.tsx`** — Add `memberName` (first_name) to context, fetched alongside membership check
-- **`src/pages/MemberSignUpPage.tsx`** — Fix CTA link
-- **`src/pages/MembershipRequiredPage.tsx`** — Add email lookup for existing members
+---
 
-### Technical notes:
-- Order history fetched via `supabase.from("orders").select().eq("email", memberEmail)` 
-- Renew button creates a BobPay payment link via the edge function and redirects
-- No new database tables or migrations needed
-- All pages remain mobile responsive
+## 3. Server-Side Membership Verification
+
+### New edge function: `supabase/functions/verify-membership/index.ts`
+- Accepts `{ email: string }`
+- Queries `members` table for active status and valid expiration
+- Returns `{ valid: boolean, expiresAt: string | null }`
+
+### Changes in `src/contexts/MembershipContext.tsx`:
+- On app load, after reading localStorage, call `verify-membership` in the background
+- If server says invalid but localStorage says valid, clear localStorage and set `isMember = false`
+- Silent check — no UI disruption unless membership is actually invalid
+
+---
+
+## 4. Database Migration
+
+Add UPDATE policy on `members` table so the renewal flow can update `expiration_date` and `status`:
+
+```sql
+CREATE POLICY "Anyone can update members"
+ON public.members FOR UPDATE
+TO public
+USING (true)
+WITH CHECK (true);
+```
+
+---
+
+## Summary of files
+
+| Action | File |
+|--------|------|
+| Create | `supabase/functions/verify-membership/index.ts` |
+| Modify | `src/pages/MyMembershipPage.tsx` (add wallet card section) |
+| Modify | `src/contexts/MembershipContext.tsx` (renewal fix + server verification) |
+| Migration | Add UPDATE policy on `members` table |
+| Install | `qrcode.react` |
 
