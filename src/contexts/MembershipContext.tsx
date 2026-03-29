@@ -12,8 +12,19 @@ interface MembershipContextType {
   checkMembershipByEmail: (email: string) => Promise<boolean>;
 }
 
+const defaultMembershipContext: MembershipContextType = {
+  isMember: false,
+  membershipExpiry: null,
+  membershipPurchasedAt: null,
+  memberEmail: null,
+  memberName: null,
+  purchaseMembership: () => {},
+  checkMembership: () => {},
+  checkMembershipByEmail: async () => false,
+};
+
 // eslint-disable-next-line react-refresh/only-export-components
-const MembershipContext = createContext<MembershipContextType | undefined>(undefined);
+const MembershipContext = createContext<MembershipContextType>(defaultMembershipContext);
 
 const STORAGE_KEY = "divineCollectiveMembership";
 
