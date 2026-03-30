@@ -15,14 +15,14 @@ const Footer = () => {
   return (
     <footer>
       {/* Upper Footer */}
-      <div className="bg-background section-padding">
-        <div className="container-main grid grid-cols-1 md:grid-cols-3 gap-12">
+      <div className="bg-background py-12 md:py-14">
+        <div className="container-main grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Col 1 - Logo & desc */}
           <div>
-            <h3 className="text-[36px] font-serif font-black text-foreground italic leading-none mb-2">
+            <h3 className="text-[28px] font-serif font-black text-foreground italic leading-none mb-2">
               dc.
             </h3>
-            <p className="text-sm text-muted-foreground leading-relaxed mt-4">
+            <p className="text-sm text-muted-foreground leading-snug mt-3">
               The Divine Collective delivers premium cannabis products and accessories throughout South Africa. Explore our exclusive club and trusted dispensary.
             </p>
           </div>
