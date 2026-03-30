@@ -52,7 +52,7 @@ const CheckoutPage = () => {
 
       const { data, error: fnError } = await supabase.functions.invoke("create-bobpay-payment", {
         body: {
-          amount: cartTotal,
+          amount: finalTotal,
           item_name: itemNames.slice(0, 100) || "Order",
           email: form.email,
           phone_number: form.phone,
