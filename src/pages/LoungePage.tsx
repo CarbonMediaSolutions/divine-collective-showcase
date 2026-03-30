@@ -101,7 +101,7 @@ const LoungePage = () => {
                 <div
                   className="absolute w-14 h-4 bg-primary/80 rounded-sm"
                   style={{
-                    bottom: 16,
+                    bottom: -8,
                     left: isEven ? (tape as any).botLeft ?? "auto" : "auto",
                     right: isEven ? "auto" : (tape as any).botRight ?? "auto",
                     transform: `rotate(${tape.botAngle}deg)`,
