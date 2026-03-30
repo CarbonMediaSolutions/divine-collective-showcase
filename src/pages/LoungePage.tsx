@@ -67,11 +67,11 @@ const LoungePage = () => {
 
       {/* Polaroid Gallery */}
       <section className="py-12 md:py-16 bg-background">
-        <div className="container-main grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10 justify-items-center">
+        <div className="container-main grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12 justify-items-center">
           {polaroidImages.map((src, i) => (
               <div
                 key={i}
-                className="relative cursor-pointer transition-transform duration-200 hover:scale-105 w-[230px] md:w-[250px]"
+                className="relative cursor-pointer transition-transform duration-200 hover:scale-105 w-[300px] md:w-[340px]"
                 style={{
                   transform: `rotate(${polaroidRotations[i]}deg)`,
                 }}
@@ -79,7 +79,7 @@ const LoungePage = () => {
                 <img
                   src={src}
                   alt={`Lounge gallery ${i + 1}`}
-                  className="w-full h-[240px] md:h-[270px] object-cover"
+                  className="w-full h-[320px] md:h-[360px] object-cover"
                   loading="lazy"
                 />
               </div>
