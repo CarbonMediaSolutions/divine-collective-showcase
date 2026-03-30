@@ -8,14 +8,6 @@ import lounge6 from "@/assets/lounge/6.webp";
 
 const polaroidImages = [lounge1, lounge2, lounge3, lounge4, lounge5, lounge6];
 const polaroidRotations = [-2.5, 1.8, -1, 3, -1.8, 2.2];
-const tapeConfigs = [
-  { top: -6, right: -8, angle: 32, botLeft: -8, botAngle: -28 },
-  { top: -7, left: -10, angle: -30, botRight: -6, botAngle: 25 },
-  { top: -5, right: -12, angle: 38, botLeft: -10, botAngle: -32 },
-  { top: -8, left: -6, angle: -25, botRight: -8, botAngle: 30 },
-  { top: -6, right: -10, angle: 28, botLeft: -6, botAngle: -26 },
-  { top: -7, left: -8, angle: -35, botRight: -10, botAngle: 22 },
-];
 
 const LoungePage = () => {
   return (
@@ -76,10 +68,7 @@ const LoungePage = () => {
       {/* Polaroid Gallery */}
       <section className="py-12 md:py-16 bg-background">
         <div className="container-main grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10 justify-items-center">
-          {polaroidImages.map((src, i) => {
-            const tape = tapeConfigs[i];
-            const isEven = i % 2 === 0;
-            return (
+          {polaroidImages.map((src, i) => (
               <div
                 key={i}
                 className="relative cursor-pointer transition-transform duration-200 hover:scale-105 w-[230px] md:w-[250px]"
@@ -87,26 +76,6 @@ const LoungePage = () => {
                   transform: `rotate(${polaroidRotations[i]}deg)`,
                 }}
               >
-                {/* Top tape */}
-                <div
-                  className="absolute w-14 h-4 bg-primary/80 rounded-sm"
-                  style={{
-                    top: tape.top,
-                    right: isEven ? tape.right ?? "auto" : "auto",
-                    left: isEven ? "auto" : tape.left ?? "auto",
-                    transform: `rotate(${tape.angle}deg)`,
-                  }}
-                />
-                {/* Bottom tape */}
-                <div
-                  className="absolute w-14 h-4 bg-primary/80 rounded-sm"
-                  style={{
-                    bottom: -8,
-                    left: isEven ? (tape as any).botLeft ?? "auto" : "auto",
-                    right: isEven ? "auto" : (tape as any).botRight ?? "auto",
-                    transform: `rotate(${tape.botAngle}deg)`,
-                  }}
-                />
                 <img
                   src={src}
                   alt={`Lounge gallery ${i + 1}`}
@@ -114,8 +83,7 @@ const LoungePage = () => {
                   loading="lazy"
                 />
               </div>
-            );
-          })}
+            ))}
         </div>
       </section>
 
