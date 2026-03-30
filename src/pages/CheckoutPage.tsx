@@ -10,6 +10,16 @@ const CheckoutPage = () => {
   const [error, setError] = useState("");
   const [form, setForm] = useState({ name: "", email: "", phone: "", address: "", city: "", postalCode: "" });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountApplied, setDiscountApplied] = useState(false);
+
+  const finalTotal = discountApplied ? 10 : cartTotal;
+
+  const handleApplyDiscount = () => {
+    if (discountCode.trim().toUpperCase() === "DIVINETEST") {
+      setDiscountApplied(true);
+    }
+  };
 
   const handlePay = async () => {
     const errs: Record<string, string> = {};
