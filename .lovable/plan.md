@@ -1,10 +1,19 @@
 
 
-# Remove Green Tape Strips from Gallery
+# Add Test Discount Code to Checkout
 
-## Change
-In `src/pages/LoungePage.tsx`, remove the two tape `<div>` elements (top tape and bottom tape) rendered inside each polaroid card. Also remove the now-unused `tapeConfigs` array.
+## What
+Add a discount code input field on the checkout page. When the code `DIVINETEST` is entered, the total drops to R10 (flat). This lets owners test the full payment flow cheaply.
 
-### Files Modified
-- `src/pages/LoungePage.tsx` — delete the `tapeConfigs` constant and the two tape divs per image card
+## Changes — `src/pages/CheckoutPage.tsx`
+
+1. Add state: `discountCode` (string) and `discountApplied` (boolean)
+2. Add a discount code input + "Apply" button below the shipping form fields
+3. When code matches `DIVINETEST` (case-insensitive), set `discountApplied = true` and show success message
+4. Compute `finalTotal = discountApplied ? 10 : cartTotal`
+5. Use `finalTotal` in the BobPay payment call and in the pending order localStorage
+6. Show original total struck through + new R10.00 total in the order summary when discount is active
+7. Show "Test discount applied" badge in order summary
+
+No other files need changes.
 
