@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { products, categories, getProductsByCategory } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
@@ -53,28 +53,19 @@ const CategoryVideoCard = ({
   card: (typeof categoryCards)[0];
   onClick: () => void;
 }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-
   return (
     <div
       className="group cursor-pointer"
       onClick={onClick}
-      onMouseEnter={() => videoRef.current?.play()}
-      onMouseLeave={() => {
-        if (videoRef.current) {
-          videoRef.current.pause();
-          videoRef.current.currentTime = 0;
-        }
-      }}
     >
       <div className="border border-border overflow-hidden bg-background aspect-square flex items-center justify-center">
         <video
-          ref={videoRef}
           src={card.video}
+          autoPlay
           muted
           loop
           playsInline
-          preload="metadata"
+          preload="auto"
           className="w-full h-full object-cover"
         />
       </div>
