@@ -8,14 +8,6 @@ import lounge6 from "@/assets/lounge/6.webp";
 
 const polaroidImages = [lounge1, lounge2, lounge3, lounge4, lounge5, lounge6];
 const polaroidRotations = [-2.5, 1.8, -1, 3, -1.8, 2.2];
-const tapeConfigs = [
-  { top: -6, right: -8, angle: 32, botLeft: -8, botAngle: -28 },
-  { top: -7, left: -10, angle: -30, botRight: -6, botAngle: 25 },
-  { top: -5, right: -12, angle: 38, botLeft: -10, botAngle: -32 },
-  { top: -8, left: -6, angle: -25, botRight: -8, botAngle: 30 },
-  { top: -6, right: -10, angle: 28, botLeft: -6, botAngle: -26 },
-  { top: -7, left: -8, angle: -35, botRight: -10, botAngle: 22 },
-];
 
 const LoungePage = () => {
   return (
