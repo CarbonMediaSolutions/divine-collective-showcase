@@ -171,9 +171,19 @@ const CheckoutPage = () => {
                 ))}
               </div>
               <div className="h-px bg-primary/20 mb-4" />
+              {discountApplied && (
+                <div className="mb-3">
+                  <span className="bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded">TEST DISCOUNT</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-primary font-bold text-lg">Total</span>
-                <span className="text-primary font-bold text-lg">R{cartTotal.toFixed(2)}</span>
+                <div className="text-right">
+                  {discountApplied && (
+                    <span className="text-muted-foreground line-through text-sm mr-2">R{cartTotal.toFixed(2)}</span>
+                  )}
+                  <span className="text-primary font-bold text-lg">R{finalTotal.toFixed(2)}</span>
+                </div>
               </div>
             </div>
           </div>
