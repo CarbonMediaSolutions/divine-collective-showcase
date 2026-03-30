@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { products, categories, getProductsByCategory } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
