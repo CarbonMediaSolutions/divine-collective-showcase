@@ -120,6 +120,26 @@ const CheckoutPage = () => {
               ))}
             </div>
 
+            {/* Discount Code */}
+            <div className="flex gap-2 mt-6">
+              <input
+                className={inputClass + " flex-1"}
+                placeholder="Discount Code"
+                value={discountCode}
+                onChange={(e) => setDiscountCode(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={handleApplyDiscount}
+                className="border border-primary/30 text-primary text-xs uppercase tracking-wider px-4 py-2 hover:bg-primary/10 transition-colors"
+              >
+                Apply
+              </button>
+            </div>
+            {discountApplied && (
+              <p className="text-green-600 text-xs mt-2">✓ Test discount applied — total is now R10.00</p>
+            )}
+
             {error && (
               <p className="text-destructive text-sm mt-4">{error}</p>
             )}
@@ -129,7 +149,7 @@ const CheckoutPage = () => {
               disabled={loading}
               className="btn-pill-green w-full py-4 text-sm mt-8 disabled:opacity-60"
             >
-              {loading ? "CREATING PAYMENT..." : `PAY R${cartTotal.toFixed(2)} WITH BOBPAY`}
+              {loading ? "CREATING PAYMENT..." : `PAY R${finalTotal.toFixed(2)} WITH BOBPAY`}
             </button>
             <p className="text-center text-muted-foreground text-xs mt-3 flex items-center justify-center gap-1">
               <Lock size={12} /> You'll be redirected to BobPay to complete payment securely.
