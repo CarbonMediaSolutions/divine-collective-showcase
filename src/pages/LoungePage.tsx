@@ -82,10 +82,9 @@ const LoungePage = () => {
             return (
               <div
                 key={i}
-                className="bg-white p-2.5 pb-6 relative cursor-pointer transition-transform duration-200 hover:scale-105 w-[230px] md:w-[250px]"
+                className="relative cursor-pointer transition-transform duration-200 hover:scale-105 w-[230px] md:w-[250px]"
                 style={{
                   transform: `rotate(${polaroidRotations[i]}deg)`,
-                  boxShadow: "2px 4px 16px rgba(0,0,0,0.10)",
                 }}
               >
                 {/* Top tape */}
