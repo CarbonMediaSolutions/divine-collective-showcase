@@ -10,6 +10,16 @@ const CheckoutPage = () => {
   const [error, setError] = useState("");
   const [form, setForm] = useState({ name: "", email: "", phone: "", address: "", city: "", postalCode: "" });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountApplied, setDiscountApplied] = useState(false);
+
+  const finalTotal = discountApplied ? 10 : cartTotal;
+
+  const handleApplyDiscount = () => {
+    if (discountCode.trim().toUpperCase() === "DIVINETEST") {
+      setDiscountApplied(true);
+    }
+  };
 
   const handlePay = async () => {
     const errs: Record<string, string> = {};
@@ -37,12 +47,12 @@ const CheckoutPage = () => {
         city: form.city,
         postal_code: form.postalCode,
         items: items.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
-        total: cartTotal,
+        total: finalTotal,
       }));
 
       const { data, error: fnError } = await supabase.functions.invoke("create-bobpay-payment", {
         body: {
-          amount: cartTotal,
+          amount: finalTotal,
           item_name: itemNames.slice(0, 100) || "Order",
           email: form.email,
           phone_number: form.phone,
@@ -110,6 +120,26 @@ const CheckoutPage = () => {
               ))}
             </div>
 
+            {/* Discount Code */}
+            <div className="flex gap-2 mt-6">
+              <input
+                className={inputClass + " flex-1"}
+                placeholder="Discount Code"
+                value={discountCode}
+                onChange={(e) => setDiscountCode(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={handleApplyDiscount}
+                className="border border-primary/30 text-primary text-xs uppercase tracking-wider px-4 py-2 hover:bg-primary/10 transition-colors"
+              >
+                Apply
+              </button>
+            </div>
+            {discountApplied && (
+              <p className="text-green-600 text-xs mt-2">✓ Test discount applied — total is now R10.00</p>
+            )}
+
             {error && (
               <p className="text-destructive text-sm mt-4">{error}</p>
             )}
@@ -119,7 +149,7 @@ const CheckoutPage = () => {
               disabled={loading}
               className="btn-pill-green w-full py-4 text-sm mt-8 disabled:opacity-60"
             >
-              {loading ? "CREATING PAYMENT..." : `PAY R${cartTotal.toFixed(2)} WITH BOBPAY`}
+              {loading ? "CREATING PAYMENT..." : `PAY R${finalTotal.toFixed(2)} WITH BOBPAY`}
             </button>
             <p className="text-center text-muted-foreground text-xs mt-3 flex items-center justify-center gap-1">
               <Lock size={12} /> You'll be redirected to BobPay to complete payment securely.
@@ -141,9 +171,19 @@ const CheckoutPage = () => {
                 ))}
               </div>
               <div className="h-px bg-primary/20 mb-4" />
+              {discountApplied && (
+                <div className="mb-3">
+                  <span className="bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded">TEST DISCOUNT</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-primary font-bold text-lg">Total</span>
-                <span className="text-primary font-bold text-lg">R{cartTotal.toFixed(2)}</span>
+                <div className="text-right">
+                  {discountApplied && (
+                    <span className="text-muted-foreground line-through text-sm mr-2">R{cartTotal.toFixed(2)}</span>
+                  )}
+                  <span className="text-primary font-bold text-lg">R{finalTotal.toFixed(2)}</span>
+                </div>
               </div>
             </div>
           </div>
