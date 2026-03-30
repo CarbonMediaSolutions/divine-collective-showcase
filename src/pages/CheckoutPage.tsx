@@ -47,7 +47,7 @@ const CheckoutPage = () => {
         city: form.city,
         postal_code: form.postalCode,
         items: items.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
-        total: cartTotal,
+        total: finalTotal,
       }));
 
       const { data, error: fnError } = await supabase.functions.invoke("create-bobpay-payment", {
