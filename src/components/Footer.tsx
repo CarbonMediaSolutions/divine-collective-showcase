@@ -29,8 +29,8 @@ const Footer = () => {
 
           {/* Col 2 - Sitemap */}
           <div>
-            <h4 className="section-label mb-6">SITEMAP</h4>
-            <ul className="space-y-3">
+            <h4 className="section-label mb-4">SITEMAP</h4>
+            <ul className="space-y-2">
               {sitemapLinks.map((l) => (
                 <li key={l.label}>
                   <Link to={l.to} className="text-primary text-sm hover:underline transition-colors duration-300">
