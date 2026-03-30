@@ -43,8 +43,8 @@ const Footer = () => {
 
           {/* Col 3 - Information */}
           <div>
-            <h4 className="section-label mb-6">INFORMATION</h4>
-            <div className="space-y-4 text-sm">
+            <h4 className="section-label mb-4">INFORMATION</h4>
+            <div className="space-y-3 text-sm">
               <div className="flex items-start gap-3 text-foreground">
                 <MapPin size={16} className="text-primary mt-0.5 flex-shrink-0" />
                 <span>Shop 1, Cascades 4, Tyger Waterfront, Cape Town, 7530</span>
