@@ -1,9 +1,10 @@
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Leaf, Star, CheckCircle2, ArrowLeft, Download } from "lucide-react";
+import { Leaf, Star, CheckCircle2, ArrowLeft, Download, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { QRCodeSVG } from "qrcode.react";
+import { products } from "@/data/products";
 import {
   getCategoryColors,
   getFeelingColor,
@@ -12,6 +13,20 @@ import {
   effectEmojis,
   flavourEmojis,
 } from "@/lib/strainUtils";
+
+// Map strain slugs to product slugs in the shop
+const strainToProductSlug: Record<string, string> = {
+  "alien-cookies": "alien-cookies-459",
+  "mimosa": "mimosa-463",
+  "jungle-diamonds": "jungle-diamonds-466",
+  "blue-walker": "blue-walker-467",
+  "panama-punch": "panama-punch-469",
+  "sugar-cane": "sugar-cane-477",
+  "violet-bag": "violet-bag-484",
+  "elvis": "elvis-496",
+  "watermelon": "watermelon-500",
+  "maui-wowie": "maui-wowie-576",
+};
 
 type Strain = {
   id: string;
