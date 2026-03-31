@@ -119,6 +119,75 @@ export type Database = {
         }
         Relationships: []
       }
+      strains: {
+        Row: {
+          category: string
+          cbd_max: number | null
+          cbd_min: number | null
+          created_at: string | null
+          description: string | null
+          effects: string[] | null
+          featured: boolean | null
+          feelings: string[] | null
+          flavours: string[] | null
+          grow_difficulty: string | null
+          grow_info: string | null
+          id: string
+          image_url: string | null
+          in_stock: boolean | null
+          name: string
+          parents: string | null
+          slug: string
+          terpenes: string[] | null
+          thc_max: number | null
+          thc_min: number | null
+        }
+        Insert: {
+          category?: string
+          cbd_max?: number | null
+          cbd_min?: number | null
+          created_at?: string | null
+          description?: string | null
+          effects?: string[] | null
+          featured?: boolean | null
+          feelings?: string[] | null
+          flavours?: string[] | null
+          grow_difficulty?: string | null
+          grow_info?: string | null
+          id?: string
+          image_url?: string | null
+          in_stock?: boolean | null
+          name: string
+          parents?: string | null
+          slug: string
+          terpenes?: string[] | null
+          thc_max?: number | null
+          thc_min?: number | null
+        }
+        Update: {
+          category?: string
+          cbd_max?: number | null
+          cbd_min?: number | null
+          created_at?: string | null
+          description?: string | null
+          effects?: string[] | null
+          featured?: boolean | null
+          feelings?: string[] | null
+          flavours?: string[] | null
+          grow_difficulty?: string | null
+          grow_info?: string | null
+          id?: string
+          image_url?: string | null
+          in_stock?: boolean | null
+          name?: string
+          parents?: string | null
+          slug?: string
+          terpenes?: string[] | null
+          thc_max?: number | null
+          thc_min?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
