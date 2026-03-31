@@ -28,6 +28,8 @@ import PaymentSuccessPage from "./pages/PaymentSuccessPage";
 import PaymentCancelledPage from "./pages/PaymentCancelledPage";
 import NotFound from "./pages/NotFound";
 import AdminPage from "./pages/AdminPage";
+import StrainsPage from "./pages/StrainsPage";
+import StrainDetailPage from "./pages/StrainDetailPage";
 
 const queryClient = new QueryClient();
 
