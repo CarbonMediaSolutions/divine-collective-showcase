@@ -131,7 +131,7 @@ const StrainDetailPage = () => {
                 </div>
               )}
             </div>
-            <div className="flex gap-2 mt-3">
+            <div className="flex flex-wrap gap-2 mt-3">
               <span
                 className="px-4 py-1.5 rounded-full text-[12px] font-bold tracking-wider"
                 style={{ backgroundColor: catColors.bg, color: catColors.text }}
@@ -148,6 +148,14 @@ const StrainDetailPage = () => {
                 {strain.in_stock ? "In Stock" : "Out of Stock"}
               </span>
             </div>
+            {/* Buy Now button */}
+            {strainToProductSlug[strain.slug] && (
+              <Link to={`/product/${strainToProductSlug[strain.slug]}`} className="mt-4 block">
+                <Button className="w-full text-[12px] tracking-wider font-bold gap-2">
+                  <ShoppingCart size={16} /> BUY NOW
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Right - Info */}
