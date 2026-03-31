@@ -72,6 +72,8 @@ const App = () => {
                           <Route path="/checkout" element={<CheckoutPage />} />
                           <Route path="/payment-success" element={<PaymentSuccessPage />} />
                           <Route path="/payment-cancelled" element={<PaymentCancelledPage />} />
+                          <Route path="/strains" element={<StrainsPage />} />
+                          <Route path="/strains/:slug" element={<StrainDetailPage />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>
                       </main>

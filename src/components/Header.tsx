@@ -7,6 +7,7 @@ import { useMembership } from "@/contexts/MembershipContext";
 const leftLinks = [
   { label: "ABOUT", to: "/#about" },
   { label: "SHOP", to: "/categories" },
+  { label: "STRAINS", to: "/strains" },
   { label: "LOUNGE", to: "/lounge" },
 ];
 
