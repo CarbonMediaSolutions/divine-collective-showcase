@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { products } from "@/data/products";
 import { supabase } from "@/integrations/supabase/client";
+import StrainsTab from "@/components/admin/StrainsTab";
 
 const ADMIN_PASSWORD = "divine2026";
 
