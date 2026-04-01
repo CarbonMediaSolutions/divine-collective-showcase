@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Lock, Package, Users, ShoppingCart, Search } from "lucide-react";
+import { Lock, Package, Users, ShoppingCart, Search, Leaf } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
