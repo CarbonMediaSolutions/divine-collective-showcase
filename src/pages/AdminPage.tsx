@@ -87,11 +87,13 @@ const AdminDashboard = () => {
         <Tabs defaultValue="products">
           <TabsList className="mb-6">
             <TabsTrigger value="products" className="gap-2"><Package size={16} />Products</TabsTrigger>
+            <TabsTrigger value="strains" className="gap-2"><Leaf size={16} />Strains</TabsTrigger>
             <TabsTrigger value="members" className="gap-2"><Users size={16} />Members</TabsTrigger>
             <TabsTrigger value="sales" className="gap-2"><ShoppingCart size={16} />Sales</TabsTrigger>
           </TabsList>
 
           <TabsContent value="products"><ProductsTab /></TabsContent>
+          <TabsContent value="strains"><StrainsTab /></TabsContent>
           <TabsContent value="members"><MembersTab /></TabsContent>
           <TabsContent value="sales"><SalesTab /></TabsContent>
         </Tabs>
