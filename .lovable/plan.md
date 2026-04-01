@@ -1,27 +1,24 @@
-# Scrape Leafly Strain Images
-
-## Approach
-
-Write a script that fetches each Leafly strain page, extracts the primary strain image URL, and updates the `image_url` field in the `strains` table for all encyclopedia entries currently missing images.
-
-## How It Works
-
-1. Query the database for all strains where `image_url` is empty
-2. For each strain, fetch the Leafly page at `https://www.leafly.com/strains/{slug}`
-3. Extract the primary strain photo URL from the page markup (typically an `og:image` meta tag or hero image)
-4. Update the strain's `image_url` in the database with the extracted URL
-
-## Important Notes
-
-- This hotlinks to Leafly's CDN — images load from their servers. If Leafly changes URLs or blocks hotlinking, images will break.
-- Your 10 custom in-stock strains already have images and will not be touched. No override the current images for the strains pagebut not the shop page
-- ~87 encyclopedia strains will be updated.
-- The script runs once via `code--exec`.
-
-## Files
 
 
-| Action | File                                                   |
-| ------ | ------------------------------------------------------ |
-| Script | `/tmp/scrape-leafly-images.js` (temporary, runs once)  |
-| DB     | UPDATE `strains` table `image_url` column for ~87 rows |
+# Expand Emoji & Color Mappings in strainUtils.ts
+
+## What
+Extend all mapping objects in `src/lib/strainUtils.ts` to cover dozens more possible values that admins might enter, ensuring comprehensive future-proof coverage.
+
+## Changes — `src/lib/strainUtils.ts` only
+
+### `effectEmojis` — add ~20 more entries
+Current: 11 entries. Add: Calm 🧘, Giggly 🤭, Aroused 💕, Motivated 💪, Inspired 💡, Meditative 🧘‍♂️, Sociable 🤝, Dreamy 💭, Blissful 😇, Painless 💆, Mellow 🌊, Balanced ⚖️, Alert 👁️, Nostalgic 🌅, Cerebral 🧠, Soothing 🫧, Spiritual 🕉️, Grounded 🌳, Confident 💎, Stimulated ⚡
+
+### `flavourEmojis` — add ~30 more entries
+Current: 24 entries. Add: Lemon 🍋, Lime 🍈, Mango 🥭, Peach 🍑, Strawberry 🍓, Cherry 🍒, Apple 🍏, Banana 🍌, Coconut 🥥, Lavender 💐, Rose 🌹, Mint 🌿, Menthol 🧊, Diesel ⛽, Fuel ⛽, Cheese 🧀, Nutty 🥜, Butter 🧈, Cream 🍦, Woody 🪵, Sage 🌿, Tea 🍵, Honey 🍯, Ginger 🫚, Pepper 🌶️, Cinnamon 🫙, Caramel 🍮, Ammonia 💨, Chemical 🧪, Musky 🫎, Dank 🌿, Skunk 🦨, Tobacco 🍂, Plum 🫐, Apricot 🍑, Bubblegum 🫧, Kush 🌿, Haze 🌫️, Tar 🖤
+
+### `getFeelingColor` — add same new effect entries with appropriate colors
+Group by vibe: calming → purple tones, energising → green tones, mood → gold tones, mental → teal tones, body → orange tones
+
+### `getTerpeneColor` + `terpeneDescriptions` — add ~8 more terpenes
+Add: Ocimene (basil, sweet), Bisabolol (chamomile, gentle), Valencene (citrus, fresh), Nerolidol (woody, floral), Guaiol (pine, woody), Camphene (herbal, sharp), Borneol (minty, cool), Eucalyptol (eucalyptus, minty)
+
+## File
+- `src/lib/strainUtils.ts` — single file update
+
