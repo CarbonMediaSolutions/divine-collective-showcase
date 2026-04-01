@@ -349,17 +349,31 @@ const StrainsTab = () => {
               </div>
             </div>
 
-            {/* Name + Slug */}
+            {/* Name + Slug + Auto-fill */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Name *</Label>
-                <Input
-                  value={form.name}
-                  onChange={(e) => {
-                    const name = e.target.value;
-                    setForm((f) => ({ ...f, name, slug: f.slug || generateSlug(name) }));
-                  }}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    value={form.name}
+                    onChange={(e) => {
+                      const name = e.target.value;
+                      setForm((f) => ({ ...f, name, slug: f.slug || generateSlug(name) }));
+                    }}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAutoFill}
+                    disabled={autoFilling || form.name.trim().length < 2}
+                    className="gap-1 shrink-0"
+                  >
+                    <Sparkles size={14} className={autoFilling ? "animate-spin" : ""} />
+                    {autoFilling ? "Filling..." : "Auto-fill"}
+                  </Button>
+                </div>
               </div>
               <div>
                 <Label>Slug</Label>
