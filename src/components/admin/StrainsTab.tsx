@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Search, Plus, Edit2, Trash2, Upload, X, Save } from "lucide-react";
+import { Search, Plus, Edit2, Trash2, Upload, X, Save, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -66,6 +66,44 @@ const StrainsTab = () => {
   const [saving, setSaving] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [autoFilling, setAutoFilling] = useState(false);
+
+  const handleAutoFill = async () => {
+    if (!form.name || form.name.trim().length < 2) {
+      toast.error("Enter a strain name first (at least 2 characters)");
+      return;
+    }
+    setAutoFilling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-strain-data", {
+        body: { name: form.name.trim() },
+      });
+      if (error) throw new Error(error.message || "Failed to generate data");
+      if (data?.error) throw new Error(data.error);
+      
+      setForm((f) => ({
+        ...f,
+        category: data.category || f.category,
+        thc_min: data.thc_min ?? f.thc_min,
+        thc_max: data.thc_max ?? f.thc_max,
+        cbd_min: data.cbd_min ?? f.cbd_min,
+        cbd_max: data.cbd_max ?? f.cbd_max,
+        description: data.description || f.description,
+        feelings: data.feelings || f.feelings,
+        effects: data.effects || f.effects,
+        flavours: data.flavours || f.flavours,
+        terpenes: data.terpenes || f.terpenes,
+        parents: data.parents || f.parents,
+        grow_difficulty: data.grow_difficulty || f.grow_difficulty,
+        grow_info: data.grow_info || f.grow_info,
+      }));
+      toast.success("Fields auto-filled with AI data!");
+    } catch (err: any) {
+      toast.error(err.message || "Auto-fill failed");
+    } finally {
+      setAutoFilling(false);
+    }
+  };
 
   const fetchStrains = async () => {
     const { data } = await supabase.from("strains").select("*").order("name");
@@ -311,17 +349,31 @@ const StrainsTab = () => {
               </div>
             </div>
 
-            {/* Name + Slug */}
+            {/* Name + Slug + Auto-fill */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Name *</Label>
-                <Input
-                  value={form.name}
-                  onChange={(e) => {
-                    const name = e.target.value;
-                    setForm((f) => ({ ...f, name, slug: f.slug || generateSlug(name) }));
-                  }}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    value={form.name}
+                    onChange={(e) => {
+                      const name = e.target.value;
+                      setForm((f) => ({ ...f, name, slug: f.slug || generateSlug(name) }));
+                    }}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAutoFill}
+                    disabled={autoFilling || form.name.trim().length < 2}
+                    className="gap-1 shrink-0"
+                  >
+                    <Sparkles size={14} className={autoFilling ? "animate-spin" : ""} />
+                    {autoFilling ? "Filling..." : "Auto-fill"}
+                  </Button>
+                </div>
               </div>
               <div>
                 <Label>Slug</Label>
