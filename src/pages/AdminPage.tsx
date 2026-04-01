@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
-import { Lock, Package, Users, ShoppingCart, Search } from "lucide-react";
+import { Lock, Package, Users, ShoppingCart, Search, Leaf } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { products } from "@/data/products";
 import { supabase } from "@/integrations/supabase/client";
+import StrainsTab from "@/components/admin/StrainsTab";
 
 const ADMIN_PASSWORD = "divine2026";
 
@@ -86,11 +87,13 @@ const AdminDashboard = () => {
         <Tabs defaultValue="products">
           <TabsList className="mb-6">
             <TabsTrigger value="products" className="gap-2"><Package size={16} />Products</TabsTrigger>
+            <TabsTrigger value="strains" className="gap-2"><Leaf size={16} />Strains</TabsTrigger>
             <TabsTrigger value="members" className="gap-2"><Users size={16} />Members</TabsTrigger>
             <TabsTrigger value="sales" className="gap-2"><ShoppingCart size={16} />Sales</TabsTrigger>
           </TabsList>
 
           <TabsContent value="products"><ProductsTab /></TabsContent>
+          <TabsContent value="strains"><StrainsTab /></TabsContent>
           <TabsContent value="members"><MembersTab /></TabsContent>
           <TabsContent value="sales"><SalesTab /></TabsContent>
         </Tabs>
