@@ -1,12 +1,15 @@
 import { Link } from "react-router-dom";
 import { MapPin, Phone, Mail } from "lucide-react";
 
+const JOINIT_URL = "https://app.joinit.com/o/divine-collective/members";
+
 const sitemapLinks = [
   { label: "Home", to: "/" },
   { label: "About", to: "/#about" },
   { label: "Shop", to: "/categories" },
   { label: "Lounge", to: "/lounge" },
   { label: "Contact", to: "/contact" },
+  { label: "Become A Member", to: JOINIT_URL, external: true },
   { label: "Membership Account", to: "/my-membership" },
 ];
 
