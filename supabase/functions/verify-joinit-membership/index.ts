@@ -56,12 +56,14 @@ Deno.serve(async (req) => {
     const data = await response.json()
     console.log('Join It response:', JSON.stringify(data))
 
-    // Broaden active check: status 100, or active/is_active flags
-    const isActive = data.status === 100 || data.active === true || data.is_active === true
+    // Join It returns { verified: true, memberships: [{ status: 100, ... }] }
+    const isActive = data.verified === true || 
+      (data.memberships && data.memberships.length > 0 && data.memberships[0].status === 100) ||
+      data.status === 100
     
     if (isActive) {
       return new Response(
-        JSON.stringify({ verified: true, email, status: 'Active', joinit_status: data.status }),
+        JSON.stringify({ verified: true, email, status: 'Active' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
