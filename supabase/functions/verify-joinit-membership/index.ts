@@ -35,6 +35,16 @@ Deno.serve(async (req) => {
       },
     })
 
+    // Handle 404 specifically — means no membership found
+    if (response.status === 404) {
+      const body = await response.text()
+      console.log('Join It 404 response:', body)
+      return new Response(
+        JSON.stringify({ verified: false, email, status: 'Not Found' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     if (!response.ok) {
       console.error('Join It API error:', response.status, await response.text())
       return new Response(
@@ -44,9 +54,14 @@ Deno.serve(async (req) => {
     }
 
     const data = await response.json()
+    console.log('Join It response:', JSON.stringify(data))
 
-    // Join It returns status 100 for Active members
-    if (data && data.status === 100) {
+    // Join It returns { verified: true, memberships: [{ status: 100, ... }] }
+    const isActive = data.verified === true || 
+      (data.memberships && data.memberships.length > 0 && data.memberships[0].status === 100) ||
+      data.status === 100
+    
+    if (isActive) {
       return new Response(
         JSON.stringify({ verified: true, email, status: 'Active' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -54,7 +69,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ verified: false, email, status: 'Inactive' }),
+      JSON.stringify({ verified: false, email, status: 'Inactive', joinit_status: data.status }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (err) {
