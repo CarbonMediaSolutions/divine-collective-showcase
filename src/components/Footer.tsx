@@ -35,9 +35,15 @@ const Footer = () => {
             <ul className="space-y-2">
               {sitemapLinks.map((l) => (
                 <li key={l.label}>
-                  <Link to={l.to} className="text-primary text-sm hover:underline transition-colors duration-300">
-                    {l.label}
-                  </Link>
+                  {"external" in l && l.external ? (
+                    <a href={l.to} target="_blank" rel="noopener noreferrer" className="text-primary text-sm hover:underline transition-colors duration-300">
+                      {l.label}
+                    </a>
+                  ) : (
+                    <Link to={l.to} className="text-primary text-sm hover:underline transition-colors duration-300">
+                      {l.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
