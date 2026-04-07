@@ -56,12 +56,14 @@ const LoungePage = () => {
               Get unlimited access to the best lounge in Cape Town.
             </p>
           </div>
-          <Link
-            to="/member-sign-up-page"
+          <a
+            href="https://app.joinit.com/o/divine-collective/members"
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-block border border-foreground text-foreground font-medium tracking-widest text-xs px-6 py-2.5 hover:bg-foreground hover:text-background transition-colors uppercase"
           >
             BECOME A MEMBER
-          </Link>
+          </a>
         </div>
       </section>
 

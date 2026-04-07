@@ -20,8 +20,6 @@ import MemberSignUpPage from "./pages/MemberSignUpPage";
 import ContactPage from "./pages/ContactPage";
 import CartPage from "./pages/CartPage";
 import MembershipRequiredPage from "./pages/MembershipRequiredPage";
-import MembershipCheckoutPage from "./pages/MembershipCheckoutPage";
-import MembershipSuccessPage from "./pages/MembershipSuccessPage";
 import MyMembershipPage from "./pages/MyMembershipPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";

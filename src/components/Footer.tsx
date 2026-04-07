@@ -7,8 +7,7 @@ const sitemapLinks = [
   { label: "Shop", to: "/categories" },
   { label: "Lounge", to: "/lounge" },
   { label: "Contact", to: "/contact" },
-  { label: "Become A Member", to: "/member-sign-up-page" },
-  { label: "Membership Account", to: "/member-sign-up-page" },
+  { label: "Membership Account", to: "/my-membership" },
 ];
 
 const Footer = () => {
