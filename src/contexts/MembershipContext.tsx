@@ -48,10 +48,27 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
     setMemberEmail(null);
   }, []);
 
+  const ADMIN_TEST_EMAIL = "info@thedivinecollective.co.za";
+
   const verifyWithJoinIt = useCallback(async (email: string): Promise<boolean> => {
+    const normalised = email.trim().toLowerCase();
+
+    // Admin test email is always treated as an active member
+    if (normalised === ADMIN_TEST_EMAIL) {
+      const stored: StoredMembership = {
+        active: true,
+        email: normalised,
+        verifiedAt: new Date().toISOString(),
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
+      setIsMember(true);
+      setMemberEmail(normalised);
+      return true;
+    }
+
     try {
       const { data, error } = await supabase.functions.invoke("verify-joinit-membership", {
-        body: { email: email.trim().toLowerCase() },
+        body: { email: normalised },
       });
       if (error) {
         console.error("Verify error:", error);
@@ -60,12 +77,12 @@ export const MembershipProvider = ({ children }: { children: ReactNode }) => {
       if (data?.verified) {
         const stored: StoredMembership = {
           active: true,
-          email: email.trim().toLowerCase(),
+          email: normalised,
           verifiedAt: new Date().toISOString(),
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
         setIsMember(true);
-        setMemberEmail(stored.email);
+        setMemberEmail(normalised);
         return true;
       }
       clearMembership();
