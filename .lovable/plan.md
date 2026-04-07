@@ -1,57 +1,74 @@
 
 
-# AI Auto-Fill Strain Data from Name
+# Migrate Membership System to Join It
 
 ## Overview
-Add an "Auto-fill with AI" button to the strain add/edit dialog. When clicked, it sends the strain name to an edge function that calls Lovable AI (Gemini) to generate Leafly-style strain data, then populates all form fields.
+Replace the on-site membership signup/payment flow with Join It integration. The website will redirect new members to Join It and verify returning members via the Join It API.
 
 ## Changes
 
-### 1. Edge Function: `supabase/functions/generate-strain-data/index.ts`
-- Accepts `{ name: string }` in the request body
-- Calls Lovable AI Gateway with a detailed system prompt instructing it to return cannabis strain data matching Leafly's style
-- Uses tool calling (structured output) to return a strict JSON schema with: category, thc_min, thc_max, cbd_min, cbd_max, description, feelings, effects, flavours, terpenes, parents, grow_difficulty, grow_info
-- Returns the parsed JSON to the client
+### 1. Add Secret: `JOINIT_ACCESS_TOKEN`
+Use the `add_secret` tool to request the Join It API token from the user before proceeding.
 
-### 2. UI: `src/components/admin/StrainsTab.tsx`
-- Add a "Auto-fill" button (with a sparkle/wand icon) next to the Name input field
-- Button is enabled when name has 2+ characters
-- On click: shows loading state, calls the edge function via `supabase.functions.invoke('generate-strain-data', { body: { name } })`
-- On success: populates all form fields with the returned data (preserving any existing image)
-- On error: shows toast with error message
+### 2. Create Edge Function: `supabase/functions/verify-joinit-membership/index.ts`
+- POST endpoint accepting `{ email: string }`
+- Calls `GET https://app.joinitapi.com/api/v1/organizations/me/verify_membership?email=...` with Bearer token
+- Returns `{ verified: true/false, email, status }` with CORS headers
+- Comment noting where to get the token
 
-## Technical Details
+### 3. Rewrite `src/contexts/MembershipContext.tsx`
+- Remove `purchaseMembership`, `checkMembership`, `checkMembershipByEmail`, `membershipPurchasedAt`, `memberName`
+- Add `verifyWithJoinIt(email): Promise<boolean>` and `clearMembership()`
+- localStorage shape: `{ active, email, verifiedAt }`
+- On load: restore if `verifiedAt < 24h`, else silently re-verify, else clear
 
-**Structured output schema** for the AI call:
-```json
-{
-  "name": "strain_data",
-  "parameters": {
-    "properties": {
-      "category": { "type": "string", "enum": ["Indica", "Sativa", "Hybrid"] },
-      "thc_min": { "type": "number" },
-      "thc_max": { "type": "number" },
-      "cbd_min": { "type": "number" },
-      "cbd_max": { "type": "number" },
-      "description": { "type": "string" },
-      "feelings": { "type": "array", "items": { "type": "string" } },
-      "effects": { "type": "array", "items": { "type": "string" } },
-      "flavours": { "type": "array", "items": { "type": "string" } },
-      "terpenes": { "type": "array", "items": { "type": "string" } },
-      "parents": { "type": "string" },
-      "grow_difficulty": { "type": "string", "enum": ["Easy", "Intermediate", "Difficult"] },
-      "grow_info": { "type": "string" }
-    }
-  }
-}
-```
+### 4. Update "Become a Member" links (5 locations)
+All point to `https://app.joinit.com/o/divine-collective/members` with `target="_blank" rel="noopener noreferrer"`:
+- **Header** (`src/components/Header.tsx`): non-member nav link → `<a>` to Join It. When `isMember`, link to `/my-membership`. Dropdown sub-item becomes "Manage on Join It" → Join It URL
+- **Footer** (`src/components/Footer.tsx`): "Become A Member" → `<a>` to Join It
+- **LoungePage** (`src/pages/LoungePage.tsx`): banner button → `<a>` to Join It
+- **MemberSignUpPage** (`src/pages/MemberSignUpPage.tsx`): hero button → `<a>` to Join It
+- **MembershipRequiredPage**: card button → `<a>` to Join It
 
-**System prompt** will instruct the AI to act as a cannabis strain encyclopedia expert, returning accurate data based on well-known strain databases like Leafly, using the mapped values from `strainUtils.ts` for feelings, effects, flavours, and terpenes where possible.
+### 5. Rewrite `src/pages/MembershipRequiredPage.tsx`
+- Top: "Become A Member" section with "JOIN NOW — R100" button → Join It (new tab)
+- Divider with "OR"
+- Bottom: "Already A Member?" with email input + "VERIFY MEMBERSHIP" button calling `verifyWithJoinIt`. Success → redirect to `/cart`. Failure → error message.
 
-## Files
+### 6. Update `src/pages/CartPage.tsx`
+- Non-member: amber box with "JOIN NOW" (→ Join It new tab) + "VERIFY MEMBERSHIP" (→ inline email form)
+- Member: green "✓ Active Member" badge (no expiry date)
+- Inline verify form slides open, verifies without navigation
+
+### 7. Rewrite `src/pages/MyMembershipPage.tsx`
+- Non-member: email verify form + "Join via portal" link
+- Member: ACTIVE badge, email shown, "Membership managed by Join It" note, "MANAGE MY MEMBERSHIP" button → Join It portal, "Sign out" link calling `clearMembership()`
+- Remove: progress bar, days remaining, renew, MembershipCardPreview, WalletButtons, MembershipOrderHistory
+
+### 8. Update `src/App.tsx`
+- Remove `/membership-checkout` and `/membership-success` routes
+- Remove imports for `MembershipCheckoutPage` and `MembershipSuccessPage`
+- Keep `/membership-required`, `/my-membership`, `/member-sign-up-page`
+
+### 9. Update `src/pages/PaymentCancelledPage.tsx`
+- Change membership cancel link from `/membership-checkout` to Join It URL
+
+### Files Summary
 
 | Action | File |
 |--------|------|
-| Create | `supabase/functions/generate-strain-data/index.ts` |
-| Modify | `src/components/admin/StrainsTab.tsx` — add auto-fill button + logic |
+| Secret | `JOINIT_ACCESS_TOKEN` — request from user |
+| Create | `supabase/functions/verify-joinit-membership/index.ts` |
+| Rewrite | `src/contexts/MembershipContext.tsx` |
+| Modify | `src/components/Header.tsx` |
+| Modify | `src/components/Footer.tsx` |
+| Modify | `src/pages/LoungePage.tsx` |
+| Modify | `src/pages/MemberSignUpPage.tsx` |
+| Rewrite | `src/pages/MembershipRequiredPage.tsx` |
+| Modify | `src/pages/CartPage.tsx` |
+| Rewrite | `src/pages/MyMembershipPage.tsx` |
+| Modify | `src/App.tsx` |
+| Modify | `src/pages/PaymentCancelledPage.tsx` |
+| Keep | `supabase/functions/verify-membership/index.ts` (coexists) |
+| Keep | `supabase/functions/create-bobpay-payment/index.ts` (used for product checkout) |
 
