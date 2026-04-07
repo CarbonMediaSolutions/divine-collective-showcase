@@ -1,67 +1,27 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Crown, Loader2, CheckCircle, ExternalLink } from "lucide-react";
 import { useMembership } from "@/contexts/MembershipContext";
-import { supabase } from "@/integrations/supabase/client";
-import { format, differenceInDays } from "date-fns";
-import { ShoppingBag, Coffee, Crown, Truck, Star, Gift, Loader2 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-import MembershipCardPreview from "@/components/membership/MembershipCardPreview";
-import WalletButtons from "@/components/membership/WalletButtons";
-import MembershipBenefits from "@/components/membership/MembershipBenefits";
-import MembershipOrderHistory from "@/components/membership/MembershipOrderHistory";
 
-interface Order {
-  id: string;
-  created_at: string;
-  total: number;
-  status: string;
-  items: any[];
-  payment_ref: string | null;
-}
+const JOINIT_URL = "https://app.joinit.com/o/divine-collective/members";
+const JOINIT_PORTAL = "https://app.joinit.com/o/divine-collective";
 
 const MyMembershipPage = () => {
-  const { isMember, membershipExpiry, membershipPurchasedAt, memberEmail, memberName } = useMembership();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [ordersLoading, setOrdersLoading] = useState(false);
-  const [renewLoading, setRenewLoading] = useState(false);
+  const { isMember, memberEmail, verifyWithJoinIt, clearMembership } = useMembership();
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<"success" | "not_found" | "error" | null>(null);
 
-  useEffect(() => {
-    if (memberEmail) {
-      setOrdersLoading(true);
-      supabase
-        .from("orders")
-        .select("*")
-        .eq("email", memberEmail)
-        .order("created_at", { ascending: false })
-        .limit(10)
-        .then(({ data }) => {
-          setOrders((data as Order[]) || []);
-          setOrdersLoading(false);
-        });
-    }
-  }, [memberEmail]);
-
-  const handleRenew = async () => {
-    setRenewLoading(true);
+  const handleVerify = async () => {
+    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) return;
+    setLoading(true);
+    setResult(null);
     try {
-      const origin = window.location.origin;
-      const { data, error } = await supabase.functions.invoke("create-bobpay-payment", {
-        body: {
-          amount: 100,
-          item_name: "Divine Collective Membership Renewal - 3 Months",
-          email: memberEmail || "",
-          payment_type: "membership",
-          success_url: `${origin}/payment-success?type=membership`,
-          cancel_url: `${origin}/payment-cancelled?type=membership`,
-        },
-      });
-      if (error) throw error;
-      if (data?.url) window.location.href = data.url;
-      else setRenewLoading(false);
-    } catch (e) {
-      console.error("Renewal error:", e);
-      setRenewLoading(false);
+      const verified = await verifyWithJoinIt(email.trim());
+      setResult(verified ? "success" : "not_found");
+    } catch {
+      setResult("error");
     }
+    setLoading(false);
   };
 
   if (!isMember) {
@@ -69,25 +29,54 @@ const MyMembershipPage = () => {
       <div className="section-padding bg-background">
         <div className="container-main text-center max-w-lg mx-auto">
           <h1 className="font-serif text-primary italic text-[36px] md:text-[40px] mb-6">Your Membership</h1>
-          <p className="text-muted-foreground mb-8">You don't have an active membership.</p>
-          <Link to="/membership-checkout" className="btn-pill-green inline-block">
-            GET A MEMBERSHIP
-          </Link>
+          <div className="bg-card border border-primary/15 rounded-2xl p-8 text-left">
+            <p className="text-muted-foreground text-sm mb-6 text-center">
+              You don't have a verified membership session.
+            </p>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
+              disabled={loading}
+              className="w-full bg-transparent border border-primary/30 rounded-full py-3 px-5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary disabled:opacity-50"
+              onKeyDown={(e) => e.key === "Enter" && handleVerify()}
+            />
+            <button
+              onClick={handleVerify}
+              disabled={loading || !email.trim()}
+              className="w-full mt-3 py-3 rounded-full border border-primary text-primary text-xs uppercase tracking-[2px] font-semibold hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-50"
+            >
+              {loading ? <Loader2 size={14} className="animate-spin mx-auto" /> : "VERIFY MEMBERSHIP"}
+            </button>
+
+            {result === "success" && (
+              <div className="flex items-center gap-2 justify-center mt-4">
+                <CheckCircle size={16} className="text-primary" />
+                <span className="text-primary text-sm font-semibold">Membership verified!</span>
+              </div>
+            )}
+            {result === "not_found" && (
+              <p className="text-destructive text-xs mt-3 text-center">
+                No active membership found for this email.
+              </p>
+            )}
+            {result === "error" && (
+              <p className="text-destructive text-xs mt-3 text-center">
+                Unable to verify right now. Please try again.
+              </p>
+            )}
+          </div>
+          <p className="text-muted-foreground text-sm mt-6">
+            New member?{" "}
+            <a href={JOINIT_URL} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+              Join via our membership portal →
+            </a>
+          </p>
         </div>
       </div>
     );
   }
-
-  const now = new Date();
-  const daysRemaining = membershipExpiry ? Math.max(0, differenceInDays(membershipExpiry, now)) : 0;
-  const totalDays = 90;
-  const progressPercent = Math.min(100, Math.max(0, ((totalDays - daysRemaining) / totalDays) * 100));
-  const circumference = 2 * Math.PI * 54;
-  const strokeDashoffset = circumference - (((100 - progressPercent) / 100) * circumference);
-
-  const fullName = memberName
-    ? `${memberName}${memberEmail ? "" : ""}`
-    : memberEmail || "Member";
 
   return (
     <div className="bg-background min-h-screen">
@@ -102,7 +91,7 @@ const MyMembershipPage = () => {
             ✦ Active Member
           </span>
           <h1 className="text-primary-foreground font-serif text-[32px] md:text-[48px] leading-tight mb-3">
-            Welcome back{memberName ? `, ${memberName}` : ""}
+            Your Membership
           </h1>
           <p className="text-primary-foreground/60 text-base max-w-md mx-auto">
             Your membership is active. Enjoy premium access to everything Divine Collective has to offer.
@@ -111,113 +100,52 @@ const MyMembershipPage = () => {
       </section>
 
       <div className="container-main py-12 md:py-16">
-        {/* Membership Card + Stats */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8 mb-16">
-          {/* Card */}
-          <div className="bg-card border border-primary/15 rounded-2xl p-8 md:p-10 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-[2px] mb-1">Membership</p>
-                  <h2 className="font-serif text-primary text-2xl md:text-3xl">Divine Collective</h2>
-                </div>
-                <Crown size={28} className="text-primary/40" />
+        {/* Membership Card */}
+        <div className="bg-card border border-primary/15 rounded-2xl p-8 md:p-10 relative overflow-hidden max-w-2xl mx-auto mb-10">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-[2px] mb-1">Membership</p>
+                <h2 className="font-serif text-primary text-2xl md:text-3xl">Divine Collective</h2>
               </div>
+              <Crown size={28} className="text-primary/40" />
+            </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                <div>
-                  <p className="text-[11px] text-muted-foreground uppercase tracking-[1.5px] mb-1">Member Since</p>
-                  <p className="text-foreground font-semibold text-sm">
-                    {membershipPurchasedAt ? format(membershipPurchasedAt, "dd MMM yyyy") : "—"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[11px] text-muted-foreground uppercase tracking-[1.5px] mb-1">Valid Until</p>
-                  <p className="text-foreground font-semibold text-sm">
-                    {membershipExpiry ? format(membershipExpiry, "dd MMM yyyy") : "—"}
-                  </p>
-                </div>
-                <div className="col-span-2 md:col-span-1">
-                  <p className="text-[11px] text-muted-foreground uppercase tracking-[1.5px] mb-1">Email</p>
-                  <p className="text-foreground font-semibold text-sm truncate">{memberEmail || "—"}</p>
-                </div>
+            <div className="space-y-4">
+              <div>
+                <p className="text-[11px] text-muted-foreground uppercase tracking-[1.5px] mb-1">Status</p>
+                <span className="inline-block bg-primary/15 text-primary text-xs font-bold px-3 py-1 rounded-full">ACTIVE</span>
               </div>
-
-              {/* Progress bar */}
-              <div className="mt-8">
-                <div className="flex justify-between text-xs text-muted-foreground mb-2">
-                  <span>Membership progress</span>
-                  <span>{daysRemaining} days remaining</span>
-                </div>
-                <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-700"
-                    style={{
-                      width: `${100 - progressPercent}%`,
-                      background: `linear-gradient(90deg, hsl(var(--primary)), hsl(153, 60%, 30%))`,
-                    }}
-                  />
-                </div>
+              <div>
+                <p className="text-[11px] text-muted-foreground uppercase tracking-[1.5px] mb-1">Email</p>
+                <p className="text-foreground font-semibold text-sm">{memberEmail || "—"}</p>
               </div>
             </div>
-          </div>
 
-          {/* Circular progress */}
-          <div className="bg-card border border-primary/15 rounded-2xl p-8 flex flex-col items-center justify-center">
-            <svg width="140" height="140" className="mb-4">
-              <circle cx="70" cy="70" r="54" fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
-              <circle
-                cx="70" cy="70" r="54" fill="none"
-                stroke="hsl(var(--primary))"
-                strokeWidth="8"
-                strokeLinecap="round"
-                strokeDasharray={circumference}
-                strokeDashoffset={strokeDashoffset}
-                transform="rotate(-90 70 70)"
-                className="transition-all duration-700"
-              />
-              <text x="70" y="64" textAnchor="middle" className="fill-foreground text-2xl font-bold" style={{ fontSize: "28px" }}>
-                {daysRemaining}
-              </text>
-              <text x="70" y="84" textAnchor="middle" className="fill-muted-foreground" style={{ fontSize: "11px" }}>
-                days left
-              </text>
-            </svg>
-            <button
-              onClick={handleRenew}
-              disabled={renewLoading}
-              className="w-full py-3 border border-primary text-primary rounded-full font-semibold text-xs uppercase tracking-[2px] hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-50"
+            <div className="mt-8 p-4 bg-muted/50 rounded-lg">
+              <p className="text-muted-foreground text-xs leading-relaxed">
+                Membership managed by Join It. To view your expiry date, renewal options, and membership card, visit your Join It portal.
+              </p>
+            </div>
+
+            <a
+              href={JOINIT_PORTAL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 w-full py-3 rounded-full border border-primary text-primary text-xs uppercase tracking-[2px] font-semibold hover:bg-primary hover:text-primary-foreground transition-colors flex items-center justify-center gap-2"
             >
-              {renewLoading ? <Loader2 size={14} className="animate-spin mx-auto" /> : "RENEW MEMBERSHIP"}
+              MANAGE MY MEMBERSHIP <ExternalLink size={12} />
+            </a>
+
+            <button
+              onClick={clearMembership}
+              className="w-full mt-3 text-muted-foreground text-xs hover:text-foreground transition-colors"
+            >
+              Sign out of membership
             </button>
           </div>
         </div>
-
-        {/* Digital Membership Card */}
-        <div className="mb-16">
-          <h2 className="font-serif text-primary text-xl md:text-2xl mb-8 text-center">Your Digital Card</h2>
-          <div className="flex flex-col items-center gap-6">
-            <MembershipCardPreview
-              memberName={fullName}
-              memberEmail={memberEmail}
-              expiryDate={membershipExpiry}
-            />
-            <WalletButtons />
-          </div>
-        </div>
-
-        {/* Benefits */}
-        <MembershipBenefits />
-
-        {/* Quick Actions */}
-        <div className="flex flex-wrap gap-3 justify-center mb-16">
-          <Link to="/categories" className="btn-pill-green px-8 py-3 text-sm">SHOP NOW</Link>
-          <Link to="/lounge" className="px-8 py-3 rounded-full border border-primary text-primary text-sm font-semibold uppercase tracking-[1.5px] hover:bg-primary hover:text-primary-foreground transition-colors">VISIT LOUNGE</Link>
-        </div>
-
-        {/* Order History */}
-        <MembershipOrderHistory orders={orders} loading={ordersLoading} />
       </div>
     </div>
   );

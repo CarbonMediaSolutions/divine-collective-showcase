@@ -1,13 +1,20 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Minus, Plus, X, Lock, Check } from "lucide-react";
+import { Minus, Plus, X, Lock, Check, Loader2, CheckCircle } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useMembership } from "@/contexts/MembershipContext";
-import { format } from "date-fns";
+
+const JOINIT_URL = "https://app.joinit.com/o/divine-collective/members";
 
 const CartPage = () => {
   const { items, removeFromCart, updateQuantity, cartTotal } = useCart();
-  const { isMember, membershipExpiry } = useMembership();
+  const { isMember, verifyWithJoinIt } = useMembership();
   const navigate = useNavigate();
+
+  const [showVerify, setShowVerify] = useState(false);
+  const [verifyEmail, setVerifyEmail] = useState("");
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [verifyResult, setVerifyResult] = useState<"success" | "not_found" | "error" | null>(null);
 
   const handleCheckout = () => {
     if (isMember) {
@@ -15,6 +22,19 @@ const CartPage = () => {
     } else {
       navigate("/membership-required");
     }
+  };
+
+  const handleVerify = async () => {
+    if (!verifyEmail.trim() || !/\S+@\S+\.\S+/.test(verifyEmail)) return;
+    setVerifyLoading(true);
+    setVerifyResult(null);
+    try {
+      const verified = await verifyWithJoinIt(verifyEmail.trim());
+      setVerifyResult(verified ? "success" : "not_found");
+    } catch {
+      setVerifyResult("error");
+    }
+    setVerifyLoading(false);
   };
 
   if (items.length === 0) {
@@ -113,23 +133,67 @@ const CartPage = () => {
               <div className="mt-4 bg-primary/[0.08] border border-primary/30 rounded-lg p-4">
                 <div className="flex items-start gap-3">
                   <Lock size={18} className="text-primary mt-0.5 flex-shrink-0" />
-                  <div>
+                  <div className="flex-1">
                     <p className="text-primary text-sm font-semibold">Membership Required</p>
                     <p className="text-muted-foreground text-xs mt-1">
-                      You need an active membership to complete your purchase. Membership is R100 for 3 months.
+                      You need an active Join It membership to complete your purchase.
                     </p>
-                    <Link to="/membership-required" className="text-primary text-xs font-bold mt-2 inline-block hover:underline">
-                      Get Your Membership →
-                    </Link>
+                    <div className="flex gap-2 mt-3">
+                      <a
+                        href={JOINIT_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs px-4 py-2 rounded-full border border-primary text-primary font-semibold uppercase tracking-[1px] hover:bg-primary hover:text-primary-foreground transition-colors"
+                      >
+                        JOIN NOW
+                      </a>
+                      <button
+                        onClick={() => setShowVerify(!showVerify)}
+                        className="text-xs px-4 py-2 rounded-full border border-primary/40 text-primary font-semibold uppercase tracking-[1px] hover:border-primary transition-colors"
+                      >
+                        VERIFY MEMBERSHIP
+                      </button>
+                    </div>
+
+                    {showVerify && (
+                      <div className="mt-4 pt-4 border-t border-primary/15 animate-fade-in">
+                        <input
+                          type="email"
+                          value={verifyEmail}
+                          onChange={(e) => setVerifyEmail(e.target.value)}
+                          placeholder="your@email.com"
+                          disabled={verifyLoading}
+                          className="w-full bg-transparent border border-primary/30 rounded-full py-2.5 px-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary disabled:opacity-50"
+                          onKeyDown={(e) => e.key === "Enter" && handleVerify()}
+                        />
+                        <button
+                          onClick={handleVerify}
+                          disabled={verifyLoading || !verifyEmail.trim()}
+                          className="w-full mt-2 py-2.5 rounded-full border border-primary text-primary text-xs uppercase tracking-[1px] font-semibold hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-50"
+                        >
+                          {verifyLoading ? <Loader2 size={14} className="animate-spin mx-auto" /> : "VERIFY"}
+                        </button>
+                        {verifyResult === "success" && (
+                          <div className="flex items-center gap-2 mt-2">
+                            <CheckCircle size={14} className="text-primary" />
+                            <span className="text-primary text-xs font-semibold">Verified!</span>
+                          </div>
+                        )}
+                        {verifyResult === "not_found" && (
+                          <p className="text-destructive text-xs mt-2">No active membership found.</p>
+                        )}
+                        {verifyResult === "error" && (
+                          <p className="text-destructive text-xs mt-2">Unable to verify. Try again.</p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             ) : (
               <div className="mt-4 bg-primary/10 rounded-lg px-4 py-3 flex items-center gap-2">
                 <Check size={14} className="text-primary" />
-                <span className="text-primary text-xs font-semibold">
-                  Active Member — Expires {membershipExpiry ? format(membershipExpiry, "dd MMM yyyy") : ""}
-                </span>
+                <span className="text-primary text-xs font-semibold">✓ Active Member</span>
               </div>
             )}
           </div>
