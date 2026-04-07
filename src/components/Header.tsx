@@ -4,6 +4,9 @@ import { Menu, X, ChevronDown } from "lucide-react";
 import Logo from "./Logo";
 import { useMembership } from "@/contexts/MembershipContext";
 
+const JOINIT_URL = "https://app.joinit.com/o/divine-collective/members";
+const JOINIT_PORTAL = "https://app.joinit.com/o/divine-collective";
+
 const leftLinks = [
   { label: "ABOUT", to: "/#about" },
   { label: "SHOP", to: "/categories" },
@@ -27,9 +30,6 @@ const Header = () => {
       if (el) el.scrollIntoView({ behavior: "smooth" });
     }
   };
-
-  const memberLink = isMember ? "/my-membership" : "/member-sign-up-page";
-  const memberLabel = isMember ? "MY MEMBERSHIP" : "BECOME A MEMBER";
 
   return (
     <header className="sticky top-0 z-50 bg-background" style={{ boxShadow: "0 1px 0 rgba(0,0,0,0.1)" }}>
@@ -61,15 +61,27 @@ const Header = () => {
             </Link>
           ))}
           <div className="relative" onMouseEnter={() => setMemberDropdown(true)} onMouseLeave={() => setMemberDropdown(false)}>
-            <Link to={memberLink} className="nav-link flex items-center gap-1">
-              {isMember && <span className="w-2 h-2 rounded-full bg-primary mr-1" />}
-              {memberLabel} {!isMember && <ChevronDown size={12} />}
-            </Link>
-            {memberDropdown && !isMember && (
+            {isMember ? (
+              <Link to="/my-membership" className="nav-link flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-primary mr-1" />
+                MY MEMBERSHIP
+              </Link>
+            ) : (
+              <a href={JOINIT_URL} target="_blank" rel="noopener noreferrer" className="nav-link flex items-center gap-1">
+                BECOME A MEMBER <ChevronDown size={12} />
+              </a>
+            )}
+            {memberDropdown && (
               <div className="absolute top-full right-0 mt-1 bg-background border border-primary/20 rounded-sm py-2 px-4 min-w-[200px] animate-fade-in">
-                <Link to="/member-sign-up-page" className="nav-link block py-2 text-[11px]">
-                  Membership Dashboard
-                </Link>
+                {isMember ? (
+                  <a href={JOINIT_PORTAL} target="_blank" rel="noopener noreferrer" className="nav-link block py-2 text-[11px]">
+                    Manage on Join It
+                  </a>
+                ) : (
+                  <Link to="/my-membership" className="nav-link block py-2 text-[11px]" onClick={() => setMemberDropdown(false)}>
+                    Membership Dashboard
+                  </Link>
+                )}
               </div>
             )}
           </div>
@@ -96,10 +108,16 @@ const Header = () => {
                 {l.label}
               </Link>
             ))}
-            <Link to={memberLink} className="nav-link flex items-center gap-1" onClick={() => setMobileOpen(false)}>
-              {isMember && <span className="w-2 h-2 rounded-full bg-primary mr-1" />}
-              {memberLabel}
-            </Link>
+            {isMember ? (
+              <Link to="/my-membership" className="nav-link flex items-center gap-1" onClick={() => setMobileOpen(false)}>
+                <span className="w-2 h-2 rounded-full bg-primary mr-1" />
+                MY MEMBERSHIP
+              </Link>
+            ) : (
+              <a href={JOINIT_URL} target="_blank" rel="noopener noreferrer" className="nav-link" onClick={() => setMobileOpen(false)}>
+                BECOME A MEMBER
+              </a>
+            )}
           </div>
         </div>
       )}

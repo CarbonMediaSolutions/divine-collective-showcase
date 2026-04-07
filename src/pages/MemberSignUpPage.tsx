@@ -1,9 +1,8 @@
-import { Link } from "react-router-dom";
+const JOINIT_URL = "https://app.joinit.com/o/divine-collective/members";
 
 const MemberSignUpPage = () => {
   return (
     <section className="relative overflow-hidden flex items-center justify-center" style={{ backgroundColor: "#0a0a0a", minHeight: "80vh" }}>
-      {/* Decorative circles */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-primary/30" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full border border-primary/20" />
@@ -19,9 +18,9 @@ const MemberSignUpPage = () => {
         <p className="text-primary-foreground/70 text-base mb-10">
           Click the button below to sign up.
         </p>
-        <Link to="/membership-checkout" className="btn-pill-white text-lg px-12 py-4">
+        <a href={JOINIT_URL} target="_blank" rel="noopener noreferrer" className="btn-pill-white text-lg px-12 py-4 inline-block">
           BECOME A MEMBER
-        </Link>
+        </a>
       </div>
     </section>
   );

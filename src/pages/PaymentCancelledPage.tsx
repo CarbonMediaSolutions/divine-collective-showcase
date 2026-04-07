@@ -1,6 +1,8 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { XCircle } from "lucide-react";
 
+const JOINIT_URL = "https://app.joinit.com/o/divine-collective/members";
+
 const PaymentCancelledPage = () => {
   const [searchParams] = useSearchParams();
   const type = searchParams.get("type");
@@ -17,12 +19,15 @@ const PaymentCancelledPage = () => {
         <p className="text-muted-foreground mb-8">
           Your payment was not completed. No charges have been made.
         </p>
-        <Link
-          to={isMembership ? "/membership-checkout" : "/checkout"}
-          className="btn-pill-green inline-block"
-        >
-          TRY AGAIN
-        </Link>
+        {isMembership ? (
+          <a href={JOINIT_URL} target="_blank" rel="noopener noreferrer" className="btn-pill-green inline-block">
+            TRY AGAIN
+          </a>
+        ) : (
+          <Link to="/checkout" className="btn-pill-green inline-block">
+            TRY AGAIN
+          </Link>
+        )}
       </div>
     </div>
   );

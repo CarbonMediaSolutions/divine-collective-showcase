@@ -1,14 +1,16 @@
 import { Link } from "react-router-dom";
 import { MapPin, Phone, Mail } from "lucide-react";
 
+const JOINIT_URL = "https://app.joinit.com/o/divine-collective/members";
+
 const sitemapLinks = [
   { label: "Home", to: "/" },
   { label: "About", to: "/#about" },
   { label: "Shop", to: "/categories" },
   { label: "Lounge", to: "/lounge" },
   { label: "Contact", to: "/contact" },
-  { label: "Become A Member", to: "/member-sign-up-page" },
-  { label: "Membership Account", to: "/member-sign-up-page" },
+  { label: "Become A Member", to: JOINIT_URL, external: true },
+  { label: "Membership Account", to: "/my-membership" },
 ];
 
 const Footer = () => {
@@ -33,9 +35,15 @@ const Footer = () => {
             <ul className="space-y-2">
               {sitemapLinks.map((l) => (
                 <li key={l.label}>
-                  <Link to={l.to} className="text-primary text-sm hover:underline transition-colors duration-300">
-                    {l.label}
-                  </Link>
+                  {"external" in l && l.external ? (
+                    <a href={l.to} target="_blank" rel="noopener noreferrer" className="text-primary text-sm hover:underline transition-colors duration-300">
+                      {l.label}
+                    </a>
+                  ) : (
+                    <Link to={l.to} className="text-primary text-sm hover:underline transition-colors duration-300">
+                      {l.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
