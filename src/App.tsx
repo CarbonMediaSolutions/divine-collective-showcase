@@ -64,8 +64,6 @@ const App = () => {
                           <Route path="/contact" element={<ContactPage />} />
                           <Route path="/cart" element={<CartPage />} />
                           <Route path="/membership-required" element={<MembershipRequiredPage />} />
-                          <Route path="/membership-checkout" element={<MembershipCheckoutPage />} />
-                          <Route path="/membership-success" element={<MembershipSuccessPage />} />
                           <Route path="/my-membership" element={<MyMembershipPage />} />
                           <Route path="/checkout" element={<CheckoutPage />} />
                           <Route path="/payment-success" element={<PaymentSuccessPage />} />
