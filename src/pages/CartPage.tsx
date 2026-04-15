@@ -7,8 +7,6 @@ import { useMembership } from "@/contexts/MembershipContext";
 const JOINIT_URL = "https://app.joinit.com/o/divine-collective/members";
 
 const CartPage = () => {
-  const shopAccess = sessionStorage.getItem("shopAccess") === "true";
-  if (!shopAccess) return <Navigate to="/categories" replace />;
   const { items, removeFromCart, updateQuantity, cartTotal } = useCart();
   const { isMember, verifyWithJoinIt } = useMembership();
   const navigate = useNavigate();
@@ -17,6 +15,9 @@ const CartPage = () => {
   const [verifyEmail, setVerifyEmail] = useState("");
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [verifyResult, setVerifyResult] = useState<"success" | "not_found" | "error" | null>(null);
+
+  const shopAccess = sessionStorage.getItem("shopAccess") === "true";
+  if (!shopAccess) return <Navigate to="/categories" replace />;
 
   const handleCheckout = () => {
     if (isMember) {

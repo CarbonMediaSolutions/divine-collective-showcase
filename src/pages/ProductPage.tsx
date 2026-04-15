@@ -7,8 +7,6 @@ import { useStrainByName, useFlowerStrainData } from "@/hooks/useFlowerStrainDat
 import { getCategoryColors, getFeelingColor } from "@/lib/strainUtils";
 
 const ProductPage = () => {
-  const shopAccess = sessionStorage.getItem("shopAccess") === "true";
-  if (!shopAccess) return <Navigate to="/categories" replace />;
   const { slug } = useParams<{ slug: string }>();
   const { addToCart } = useCart();
   const product = slug ? getProductBySlug(slug) : undefined;
@@ -16,6 +14,9 @@ const ProductPage = () => {
   const isFlower = product?.category === "Flowers";
   const { data: strainData } = useStrainByName(isFlower ? product!.name : "");
   const { data: strainMap } = useFlowerStrainData();
+
+  const shopAccess = sessionStorage.getItem("shopAccess") === "true";
+  if (!shopAccess) return <Navigate to="/categories" replace />;
 
   if (!product) {
     return (
