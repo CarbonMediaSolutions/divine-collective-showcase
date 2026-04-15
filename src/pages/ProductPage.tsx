@@ -4,7 +4,7 @@ import ProductCard from "@/components/ProductCard";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import { useStrainByName, useFlowerStrainData } from "@/hooks/useFlowerStrainData";
-import { getCategoryColors, getFeelingEmoji } from "@/lib/strainUtils";
+import { getCategoryColors, getFeelingColor } from "@/lib/strainUtils";
 
 const ProductPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -168,14 +168,18 @@ const ProductPage = () => {
               <div className="mb-6">
                 <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Feelings</p>
                 <div className="flex flex-wrap gap-2">
-                  {strainData.feelings.map((f) => (
-                    <span
-                      key={f}
-                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary"
-                    >
-                      {getFeelingEmoji(f)} {f}
-                    </span>
-                  ))}
+                  {strainData.feelings.map((f) => {
+                    const colors = getFeelingColor(f);
+                    return (
+                      <span
+                        key={f}
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium"
+                        style={{ backgroundColor: colors.bg, color: colors.text }}
+                      >
+                        {f}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             )}
