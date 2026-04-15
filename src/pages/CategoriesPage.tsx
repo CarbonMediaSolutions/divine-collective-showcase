@@ -10,9 +10,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Lock } from "lucide-react";
 import { Truck, Package, Armchair, Star } from "lucide-react";
 
 const PRODUCTS_PER_PAGE = 16;
+const SHOP_USERNAME = "divine";
+const SHOP_PASSWORD = "divine2026";
 
 const categoryCards = [
   { name: "Accessories", video: "/videos/categories/Accessories.mp4" },
