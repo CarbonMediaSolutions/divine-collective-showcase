@@ -13,7 +13,7 @@ const CheckoutPage = () => {
   const [discountCode, setDiscountCode] = useState("");
   const [discountApplied, setDiscountApplied] = useState(false);
   const [referralAgent, setReferralAgent] = useState(() => sessionStorage.getItem("referral_agent") || "");
-  const [manualReferral, setManualReferral] = useState("");
+  
 
   const shopAccess = sessionStorage.getItem("shopAccess") === "true";
   if (!shopAccess) return <Navigate to="/categories" replace />;
@@ -44,7 +44,7 @@ const CheckoutPage = () => {
 
     try {
       // Store pending order for post-payment save
-      const activeReferral = referralAgent || manualReferral.trim().toUpperCase() || null;
+      const activeReferral = referralAgent || null;
       localStorage.setItem("pendingOrder", JSON.stringify({
         customer_name: form.name,
         email: form.email,
@@ -147,19 +147,6 @@ const CheckoutPage = () => {
               <p className="text-green-600 text-xs mt-2">✓ Test discount applied — total is now R10.00</p>
             )}
 
-            {/* Referral Code */}
-            {referralAgent ? (
-              <p className="text-primary/80 text-xs mt-4">✓ Referred by: <span className="font-semibold">{referralAgent}</span></p>
-            ) : (
-              <div className="flex gap-2 mt-4">
-                <input
-                  className={inputClass + " flex-1"}
-                  placeholder="Referral Code (optional)"
-                  value={manualReferral}
-                  onChange={(e) => setManualReferral(e.target.value)}
-                />
-              </div>
-            )}
 
             {error && (
               <p className="text-destructive text-sm mt-4">{error}</p>
