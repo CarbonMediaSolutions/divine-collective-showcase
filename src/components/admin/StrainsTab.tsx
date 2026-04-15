@@ -166,6 +166,7 @@ const StrainsTab = () => {
       image_url: s.image_url || "",
       in_stock: s.in_stock,
       featured: s.featured,
+      visible: s.visible,
       grow_difficulty: s.grow_difficulty || "Intermediate",
       grow_info: s.grow_info || "",
     });
