@@ -148,14 +148,6 @@ const StrainDetailPage = () => {
                 {strain.in_stock ? "In Stock" : "Out of Stock"}
               </span>
             </div>
-            {/* Buy Now button */}
-            {strainToProductSlug[strain.slug] && (
-              <Link to={`/product/${strainToProductSlug[strain.slug]}`} className="mt-4 block">
-                <Button className="w-full text-[12px] tracking-wider font-bold gap-2">
-                  <ShoppingCart size={16} /> BUY NOW
-                </Button>
-              </Link>
-            )}
           </div>
 
           {/* Right - Info */}

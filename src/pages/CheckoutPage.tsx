@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Lock } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,9 @@ const CheckoutPage = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [discountCode, setDiscountCode] = useState("");
   const [discountApplied, setDiscountApplied] = useState(false);
+
+  const shopAccess = sessionStorage.getItem("shopAccess") === "true";
+  if (!shopAccess) return <Navigate to="/categories" replace />;
 
   const finalTotal = discountApplied ? 10 : cartTotal;
 

@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, Navigate } from "react-router-dom";
 import { getProductBySlug, getRelatedProducts } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
 import { useCart } from "@/contexts/CartContext";
@@ -14,6 +14,9 @@ const ProductPage = () => {
   const isFlower = product?.category === "Flowers";
   const { data: strainData } = useStrainByName(isFlower ? product!.name : "");
   const { data: strainMap } = useFlowerStrainData();
+
+  const shopAccess = sessionStorage.getItem("shopAccess") === "true";
+  if (!shopAccess) return <Navigate to="/categories" replace />;
 
   if (!product) {
     return (
