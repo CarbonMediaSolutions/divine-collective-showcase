@@ -147,19 +147,6 @@ const CheckoutPage = () => {
               <p className="text-green-600 text-xs mt-2">✓ Test discount applied — total is now R10.00</p>
             )}
 
-            {/* Referral Code */}
-            {referralAgent ? (
-              <p className="text-primary/80 text-xs mt-4">✓ Referred by: <span className="font-semibold">{referralAgent}</span></p>
-            ) : (
-              <div className="flex gap-2 mt-4">
-                <input
-                  className={inputClass + " flex-1"}
-                  placeholder="Referral Code (optional)"
-                  value={manualReferral}
-                  onChange={(e) => setManualReferral(e.target.value)}
-                />
-              </div>
-            )}
 
             {error && (
               <p className="text-destructive text-sm mt-4">{error}</p>
