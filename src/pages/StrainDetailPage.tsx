@@ -59,6 +59,7 @@ const StrainDetailPage = () => {
         .from("strains")
         .select("*")
         .eq("slug", slug!)
+        .eq("visible", true)
         .single();
       if (error) throw error;
       return data as Strain;
@@ -73,6 +74,7 @@ const StrainDetailPage = () => {
         .from("strains")
         .select("id, name, slug, category, image_url, thc_min, thc_max")
         .eq("category", strain!.category)
+        .eq("visible", true)
         .neq("id", strain!.id)
         .limit(3);
       if (error) throw error;

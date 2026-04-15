@@ -32,6 +32,7 @@ const StrainsPage = () => {
       const { data, error } = await supabase
         .from("strains")
         .select("*")
+        .eq("visible", true)
         .order("name");
       if (error) throw error;
       return data as Strain[];
