@@ -351,37 +351,6 @@ const StrainDetailPage = () => {
           </section>
         )}
 
-        {/* QR Code */}
-        <section className="mb-12">
-          <div className="border-2 border-dashed border-border/30 rounded-xl p-6 md:p-8 text-center max-w-sm mx-auto">
-            <h3 className="font-serif text-lg font-bold text-primary mb-4">Share This Strain</h3>
-            <div className="flex justify-center mb-4">
-              <QRCodeSVG value={typeof window !== "undefined" ? window.location.href : ""} size={150} />
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-[11px] tracking-wider"
-              onClick={() => {
-                const svg = document.querySelector(".qr-section svg");
-                if (!svg) return;
-                const data = new XMLSerializer().serializeToString(svg);
-                const blob = new Blob([data], { type: "image/svg+xml" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = `${strain.slug}-qr.svg`;
-                a.click();
-                URL.revokeObjectURL(url);
-              }}
-            >
-              <Download size={14} /> Download QR Code
-            </Button>
-            <p className="text-[11px] text-muted-foreground mt-3">
-              Print or share this QR code to link directly to this strain.
-            </p>
-          </div>
-        </section>
 
         {/* Grow Info */}
         {strain.grow_info && (
