@@ -1,3 +1,4 @@
+// Product catalog - flower images sourced from strains DB
 export interface Product {
   id: number;
   slug: string;
