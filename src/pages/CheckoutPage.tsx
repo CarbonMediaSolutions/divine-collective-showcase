@@ -13,7 +13,7 @@ const CheckoutPage = () => {
   const [discountCode, setDiscountCode] = useState("");
   const [discountApplied, setDiscountApplied] = useState(false);
   const [referralAgent, setReferralAgent] = useState(() => sessionStorage.getItem("referral_agent") || "");
-  const [manualReferral, setManualReferral] = useState("");
+  
 
   const shopAccess = sessionStorage.getItem("shopAccess") === "true";
   if (!shopAccess) return <Navigate to="/categories" replace />;
