@@ -44,7 +44,7 @@ const CheckoutPage = () => {
 
     try {
       // Store pending order for post-payment save
-      const activeReferral = referralAgent || manualReferral.trim().toUpperCase() || null;
+      const activeReferral = referralAgent || null;
       localStorage.setItem("pendingOrder", JSON.stringify({
         customer_name: form.name,
         email: form.email,
