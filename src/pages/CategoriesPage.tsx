@@ -104,9 +104,7 @@ const CategoriesPage = () => {
       ) || null
     : null;
 
-  const [activeCategory, setActiveCategory] = useState<string | null>(initialCategory);
-  const [sortBy, setSortBy] = useState<SortOption>("latest");
-  const [page, setPage] = useState(1);
+  const { data: strainMap } = useFlowerStrainData();
 
   const handleShopLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,37 +116,6 @@ const CategoriesPage = () => {
       setAuthError("Invalid username or password");
     }
   };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center px-4">
-        <div className="w-full max-w-md text-center">
-          <Lock className="mx-auto mb-4 text-primary" size={40} />
-          <h1 className="text-2xl font-heading font-bold text-foreground mb-2">Shop Under Maintenance</h1>
-          <p className="text-muted-foreground text-sm mb-8">Enter credentials to access the shop.</p>
-          <form onSubmit={handleShopLogin} className="space-y-4">
-            <Input
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="rounded-full"
-            />
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="rounded-full"
-            />
-            {authError && <p className="text-destructive text-sm">{authError}</p>}
-            <Button type="submit" className="w-full rounded-full">Enter Shop</Button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
-  const { data: strainMap } = useFlowerStrainData();
 
   const filtered = useMemo(() => {
     if (!activeCategory) return [];
