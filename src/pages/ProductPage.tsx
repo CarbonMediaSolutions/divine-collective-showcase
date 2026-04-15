@@ -3,11 +3,17 @@ import { getProductBySlug, getRelatedProducts } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
+import { useStrainByName, useFlowerStrainData } from "@/hooks/useFlowerStrainData";
+import { getCategoryColors, getFeelingEmoji } from "@/lib/strainUtils";
 
 const ProductPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const { addToCart } = useCart();
   const product = slug ? getProductBySlug(slug) : undefined;
+
+  const isFlower = product?.category === "Flowers";
+  const { data: strainData } = useStrainByName(isFlower ? product!.name : "");
+  const { data: strainMap } = useFlowerStrainData();
 
   if (!product) {
     return (
@@ -32,6 +38,10 @@ const ProductPage = () => {
       : product.price;
   const hasDiscount =
     product.salePrice !== null && product.salePrice < product.price;
+
+  const displayImage = (isFlower && strainData?.image_url) || product.image;
+  const displayDescription = (isFlower && strainData?.description) || product.description;
+  const categoryColors = strainData ? getCategoryColors(strainData.category) : null;
 
   return (
     <div>
@@ -68,15 +78,26 @@ const ProductPage = () => {
       <section className="pb-16 bg-background">
         <div className="container-main grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
           {/* Image */}
-          <div className="w-full aspect-square overflow-hidden bg-product-placeholder">
-            {product.image ? (
+          <div className="w-full aspect-square overflow-hidden bg-product-placeholder relative">
+            {displayImage ? (
               <img
-                src={product.image}
+                src={displayImage}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
             ) : (
               <div className="w-full h-full bg-product-placeholder" />
+            )}
+            {strainData && (
+              <span
+                className="absolute top-4 left-4 px-3 py-1.5 rounded-full text-xs uppercase tracking-[1.5px] font-bold"
+                style={{
+                  backgroundColor: categoryColors!.bg,
+                  color: categoryColors!.text,
+                }}
+              >
+                {strainData.category}
+              </span>
             )}
           </div>
 
@@ -111,12 +132,51 @@ const ProductPage = () => {
               {product.inStock ? "In Stock" : "Out of Stock"}
             </p>
 
+            {/* THC/CBD Range */}
+            {strainData && (strainData.thc_max || strainData.cbd_max) && (
+              <div className="flex gap-6 mb-6">
+                {strainData.thc_max !== null && strainData.thc_max > 0 && (
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">THC</p>
+                    <p className="text-primary font-bold text-lg">
+                      {strainData.thc_min}–{strainData.thc_max}%
+                    </p>
+                  </div>
+                )}
+                {strainData.cbd_max !== null && strainData.cbd_max > 0 && (
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">CBD</p>
+                    <p className="text-primary font-bold text-lg">
+                      {strainData.cbd_min}–{strainData.cbd_max}%
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Description */}
-            {product.description && (
+            {displayDescription && (
               <div className="mb-8">
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  {product.description}
+                  {displayDescription}
                 </p>
+              </div>
+            )}
+
+            {/* Feelings pills */}
+            {strainData?.feelings && strainData.feelings.length > 0 && (
+              <div className="mb-6">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Feelings</p>
+                <div className="flex flex-wrap gap-2">
+                  {strainData.feelings.map((f) => (
+                    <span
+                      key={f}
+                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary"
+                    >
+                      {getFeelingEmoji(f)} {f}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -136,7 +196,7 @@ const ProductPage = () => {
                   name: product.name,
                   price: displayPrice,
                   category: product.category,
-                  image: product.image,
+                  image: displayImage,
                 });
                 toast.success(`${product.name} added to cart`, {
                   duration: 2000,
@@ -146,6 +206,16 @@ const ProductPage = () => {
             >
               ADD TO CART
             </button>
+
+            {/* Strain Library Link */}
+            {strainData?.slug && (
+              <Link
+                to={`/strains/${strainData.slug}`}
+                className="block mt-4 text-xs text-muted-foreground hover:text-primary transition-colors uppercase tracking-[2px] underline"
+              >
+                View in Strain Library →
+              </Link>
+            )}
           </div>
         </div>
       </section>
@@ -159,7 +229,11 @@ const ProductPage = () => {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {related.map((p) => (
-                <ProductCard key={p.id} product={p} />
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  strainData={p.category === "Flowers" ? strainMap?.get(p.name.toLowerCase()) : undefined}
+                />
               ))}
             </div>
           </div>
