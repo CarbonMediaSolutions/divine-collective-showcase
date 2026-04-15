@@ -53,6 +53,7 @@ const emptyStrain: Omit<Strain, "id" | "created_at"> = {
   image_url: "",
   in_stock: true,
   featured: false,
+  visible: false,
   grow_difficulty: "Intermediate",
   grow_info: "",
 };
