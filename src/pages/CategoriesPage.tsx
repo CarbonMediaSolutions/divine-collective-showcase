@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { products, categories, getProductsByCategory } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
+import { useFlowerStrainData } from "@/hooks/useFlowerStrainData";
 import {
   Select,
   SelectContent,
@@ -94,6 +95,8 @@ const CategoriesPage = () => {
   const [activeCategory, setActiveCategory] = useState<string | null>(initialCategory);
   const [sortBy, setSortBy] = useState<SortOption>("latest");
   const [page, setPage] = useState(1);
+
+  const { data: strainMap } = useFlowerStrainData();
 
   const filtered = useMemo(() => {
     if (!activeCategory) return [];
@@ -213,7 +216,11 @@ const CategoriesPage = () => {
             {/* Product Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {paginated.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  strainData={product.category === "Flowers" ? strainMap?.get(product.name.toLowerCase()) : undefined}
+                />
               ))}
             </div>
 

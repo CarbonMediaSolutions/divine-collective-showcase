@@ -2,13 +2,19 @@ import { Link } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import type { Product } from "@/data/products";
+import type { StrainData } from "@/hooks/useFlowerStrainData";
+import { getCategoryColors } from "@/lib/strainUtils";
 
 interface ProductCardProps {
   product: Product;
+  strainData?: StrainData;
 }
 
-const ProductCard = ({ product }: ProductCardProps) => {
+const ProductCard = ({ product, strainData }: ProductCardProps) => {
   const { addToCart } = useCart();
+
+  const displayImage = strainData?.image_url || product.image;
+  const strainCategory = strainData?.category;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -19,7 +25,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
       name: product.name,
       price,
       category: product.category,
-      image: product.image,
+      image: displayImage,
     });
     toast.success(`${product.name} added to cart`, {
       duration: 2000,
@@ -32,16 +38,27 @@ const ProductCard = ({ product }: ProductCardProps) => {
       to={`/product/${product.slug}`}
       className="group cursor-pointer transition-transform duration-200 hover:-translate-y-1 block"
     >
-      <div className="w-full aspect-[3/4] mb-4 overflow-hidden bg-product-placeholder">
-        {product.image ? (
+      <div className="w-full aspect-[3/4] mb-4 overflow-hidden bg-product-placeholder relative">
+        {displayImage ? (
           <img
-            src={product.image}
+            src={displayImage}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
           />
         ) : (
           <div className="w-full h-full bg-product-placeholder" />
+        )}
+        {strainCategory && (
+          <span
+            className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] uppercase tracking-[1.5px] font-bold"
+            style={{
+              backgroundColor: getCategoryColors(strainCategory).bg,
+              color: getCategoryColors(strainCategory).text,
+            }}
+          >
+            {strainCategory}
+          </span>
         )}
       </div>
       <p className="text-primary uppercase text-xs tracking-[2px] font-semibold mb-1">
