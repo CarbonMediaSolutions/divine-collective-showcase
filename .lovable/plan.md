@@ -1,33 +1,31 @@
 
 
-# Add Visibility Toggle to Strains
+# Generate Public Sitemap
 
 ## Overview
-Add a `visible` column to the strains table so the admin can hide/show strains. All strains will be hidden by default, and the public Strains Library page will only show visible ones. The admin gets a quick toggle in the table plus filter controls.
+Create a static `sitemap.xml` file in the `public/` folder so search engines can discover all public pages. Since this is a single-page app with client-side routing, the sitemap will list all publicly accessible routes using the published domain.
 
 ## Changes
 
-### 1. Database migration
-- Add `visible boolean DEFAULT false` column to `strains` table
-- This sets all existing ~150 strains to hidden by default
+### 1. Create `public/sitemap.xml`
+Static XML file listing all public routes:
+- `/` (Home)
+- `/categories` (Shop)
+- `/strains` (Strains Library)
+- `/lounge` (Lounge)
+- `/contact` (Contact)
+- `/my-membership` (Membership)
+- `/member-signup` (Member Sign Up)
+- `/cart` (Cart)
 
-### 2. Admin Strains Tab (`src/components/admin/StrainsTab.tsx`)
-- Add a "Visible" column to the table with a clickable toggle (Switch) that updates the DB inline — no need to open the edit dialog
-- Add a "Visible" toggle in the edit dialog form alongside "In Stock" and "Featured"
-- Add filter buttons above the table: "All", "Visible", "Hidden" so the admin can quickly find which strains are shown/hidden
-- The search already exists — no changes needed there
+Excludes: `/admin`, `/checkout`, `/payment-success`, `/payment-cancelled`, individual product/strain detail pages (dynamic), `/membership-required`
 
-### 3. Public Strains Page (`src/pages/StrainsPage.tsx`)
-- Add `.eq("visible", true)` to the query so only visible strains appear on the public-facing page
-
-### 4. Strain Detail Page (`src/pages/StrainDetailPage.tsx`)
-- Add `.eq("visible", true)` to the detail query so hidden strains can't be accessed by URL
+### 2. Update `public/robots.txt`
+Add a `Sitemap:` directive pointing to the sitemap URL so crawlers find it automatically.
 
 ## Files
 | Action | File |
 |--------|------|
-| Migration | Add `visible` column to `strains` (default `false`) |
-| Modify | `src/components/admin/StrainsTab.tsx` |
-| Modify | `src/pages/StrainsPage.tsx` |
-| Modify | `src/pages/StrainDetailPage.tsx` |
+| Create | `public/sitemap.xml` |
+| Modify | `public/robots.txt` |
 
