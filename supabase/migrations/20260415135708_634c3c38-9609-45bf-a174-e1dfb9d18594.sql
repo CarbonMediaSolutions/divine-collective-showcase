@@ -1,0 +1,1 @@
+ALTER TABLE public.strains ADD COLUMN visible boolean DEFAULT false;
