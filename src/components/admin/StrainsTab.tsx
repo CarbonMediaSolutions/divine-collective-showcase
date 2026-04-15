@@ -30,6 +30,7 @@ interface Strain {
   image_url: string | null;
   in_stock: boolean | null;
   featured: boolean | null;
+  visible: boolean | null;
   grow_difficulty: string | null;
   grow_info: string | null;
   created_at: string | null;
@@ -52,6 +53,7 @@ const emptyStrain: Omit<Strain, "id" | "created_at"> = {
   image_url: "",
   in_stock: true,
   featured: false,
+  visible: false,
   grow_difficulty: "Intermediate",
   grow_info: "",
 };
@@ -60,6 +62,7 @@ const StrainsTab = () => {
   const [strains, setStrains] = useState<Strain[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [visibilityFilter, setVisibilityFilter] = useState<"all" | "visible" | "hidden">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Strain | null>(null);
   const [form, setForm] = useState(emptyStrain);
@@ -115,11 +118,26 @@ const StrainsTab = () => {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    if (!q) return strains;
-    return strains.filter(
-      (s) => s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q) || s.slug.includes(q)
-    );
-  }, [search, strains]);
+    let result = strains;
+    if (q) {
+      result = result.filter(
+        (s) => s.name.toLowerCase().includes(q) || s.category.toLowerCase().includes(q) || s.slug.includes(q)
+      );
+    }
+    if (visibilityFilter === "visible") result = result.filter((s) => s.visible);
+    if (visibilityFilter === "hidden") result = result.filter((s) => !s.visible);
+    return result;
+  }, [search, strains, visibilityFilter]);
+
+  const handleToggleVisible = async (strain: Strain) => {
+    const newVal = !strain.visible;
+    setStrains((prev) => prev.map((s) => s.id === strain.id ? { ...s, visible: newVal } : s));
+    const { error } = await supabase.from("strains").update({ visible: newVal }).eq("id", strain.id);
+    if (error) {
+      toast.error("Failed to update visibility");
+      setStrains((prev) => prev.map((s) => s.id === strain.id ? { ...s, visible: !newVal } : s));
+    }
+  };
 
   const openNew = () => {
     setEditing(null);
@@ -148,6 +166,7 @@ const StrainsTab = () => {
       image_url: s.image_url || "",
       in_stock: s.in_stock,
       featured: s.featured,
+      visible: s.visible,
       grow_difficulty: s.grow_difficulty || "Intermediate",
       grow_info: s.grow_info || "",
     });
@@ -246,6 +265,21 @@ const StrainsTab = () => {
           <Input placeholder="Search strains..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <span className="text-sm text-muted-foreground">{filtered.length} strains</span>
+        <div className="flex gap-1">
+          {(["all", "visible", "hidden"] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setVisibilityFilter(f)}
+              className={`px-3 py-1.5 rounded-full text-[11px] font-semibold tracking-wider transition-all ${
+                visibilityFilter === f
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-card border border-border/20 text-foreground/70 hover:border-primary/40"
+              }`}
+            >
+              {f.toUpperCase()}
+            </button>
+          ))}
+        </div>
         <Button onClick={openNew} size="sm" className="gap-2">
           <Plus size={16} /> Add Strain
         </Button>
@@ -263,6 +297,7 @@ const StrainsTab = () => {
                 <TableHead>Category</TableHead>
                 <TableHead>THC%</TableHead>
                 <TableHead>Feelings</TableHead>
+                <TableHead>Visible</TableHead>
                 <TableHead>Stock</TableHead>
                 <TableHead>Featured</TableHead>
                 <TableHead className="w-[100px]">Actions</TableHead>
@@ -285,6 +320,9 @@ const StrainsTab = () => {
                   <TableCell className="text-sm">{s.thc_min}–{s.thc_max}%</TableCell>
                   <TableCell className="text-xs max-w-[150px] truncate">
                     {(s.feelings || []).join(", ") || "—"}
+                  </TableCell>
+                  <TableCell>
+                    <Switch checked={!!s.visible} onCheckedChange={() => handleToggleVisible(s)} />
                   </TableCell>
                   <TableCell>
                     <Badge variant={s.in_stock ? "default" : "destructive"} className="text-xs">
@@ -469,6 +507,10 @@ const StrainsTab = () => {
 
             {/* Toggles */}
             <div className="flex gap-6">
+              <div className="flex items-center gap-2">
+                <Switch checked={!!form.visible} onCheckedChange={(v) => setForm((f) => ({ ...f, visible: v }))} />
+                <Label>Visible</Label>
+              </div>
               <div className="flex items-center gap-2">
                 <Switch checked={!!form.in_stock} onCheckedChange={(v) => setForm((f) => ({ ...f, in_stock: v }))} />
                 <Label>In Stock</Label>

@@ -144,6 +144,7 @@ export type Database = {
           terpenes: string[] | null
           thc_max: number | null
           thc_min: number | null
+          visible: boolean | null
         }
         Insert: {
           category?: string
@@ -166,6 +167,7 @@ export type Database = {
           terpenes?: string[] | null
           thc_max?: number | null
           thc_min?: number | null
+          visible?: boolean | null
         }
         Update: {
           category?: string
@@ -188,6 +190,7 @@ export type Database = {
           terpenes?: string[] | null
           thc_max?: number | null
           thc_min?: number | null
+          visible?: boolean | null
         }
         Relationships: []
       }
