@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { Link, useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { products, categories, getProductsByCategory } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
 import { useFlowerStrainData } from "@/hooks/useFlowerStrainData";
@@ -90,6 +90,15 @@ const CategoryVideoCard = ({
 const CategoriesPage = () => {
   const { category: urlCategory } = useParams<{ category?: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Capture referral agent from URL param
+  useEffect(() => {
+    const refParam = searchParams.get("ref");
+    if (refParam) {
+      sessionStorage.setItem("referral_agent", refParam.toUpperCase());
+    }
+  }, [searchParams]);
 
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return sessionStorage.getItem("shopAccess") === "true";

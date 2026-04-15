@@ -32,6 +32,7 @@ const PaymentSuccessPage = () => {
             status: "completed",
             payment_ref: ref || undefined,
             payment_type: "order",
+            referred_by: order.referred_by || null,
           }).then(() => {
             localStorage.removeItem("pendingOrder");
           });
