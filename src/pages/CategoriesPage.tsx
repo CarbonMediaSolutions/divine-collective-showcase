@@ -104,6 +104,10 @@ const CategoriesPage = () => {
       ) || null
     : null;
 
+  const [activeCategory, setActiveCategory] = useState<string | null>(initialCategory);
+  const [sortBy, setSortBy] = useState<SortOption>("latest");
+  const [page, setPage] = useState(1);
+
   const { data: strainMap } = useFlowerStrainData();
 
   const handleShopLogin = (e: React.FormEvent) => {
