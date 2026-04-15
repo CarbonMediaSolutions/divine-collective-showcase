@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, Navigate } from "react-router-dom";
 import { getProductBySlug, getRelatedProducts } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
 import { useCart } from "@/contexts/CartContext";
@@ -7,6 +7,8 @@ import { useStrainByName, useFlowerStrainData } from "@/hooks/useFlowerStrainDat
 import { getCategoryColors, getFeelingColor } from "@/lib/strainUtils";
 
 const ProductPage = () => {
+  const shopAccess = sessionStorage.getItem("shopAccess") === "true";
+  if (!shopAccess) return <Navigate to="/categories" replace />;
   const { slug } = useParams<{ slug: string }>();
   const { addToCart } = useCart();
   const product = slug ? getProductBySlug(slug) : undefined;

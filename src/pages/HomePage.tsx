@@ -1,8 +1,5 @@
-import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
-import { products as allProducts } from "@/data/products";
-import ProductCard from "@/components/ProductCard";
 import gallery1 from "@/assets/gallery-1.webp";
 import gallery2 from "@/assets/gallery-2.webp";
 import gallery3 from "@/assets/gallery-3.webp";
@@ -15,12 +12,6 @@ const bulletPoints = [
 ];
 
 const HomePage = () => {
-  const bestSellers = useMemo(() => {
-    const slugs = ["daily-slap-487", "panama-punch", "grape-gummmies-411", "beaker-glass-bong-wpc368-american-purple"];
-    return slugs
-      .map((s) => allProducts.find((p) => p.slug.includes(s)))
-      .filter((p): p is NonNullable<typeof p> => p != null);
-  }, []);
 
   return (
     <div>
@@ -106,17 +97,14 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Best Sellers */}
+      {/* Best Sellers - Coming Soon */}
       <section className="section-padding bg-background">
-        <div className="container-main">
-          <h2 className="font-serif text-primary text-[36px] md:text-[42px] italic text-center mb-12">
+        <div className="container-main text-center">
+          <h2 className="font-serif text-primary text-[36px] md:text-[42px] italic mb-6">
             Our Best Sellers
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {bestSellers.map((p) => p && (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
+          <p className="text-muted-foreground text-base mb-2">Our online store is coming soon.</p>
+          <p className="text-muted-foreground text-sm">Stay tuned for our curated selection of premium products.</p>
         </div>
       </section>
 

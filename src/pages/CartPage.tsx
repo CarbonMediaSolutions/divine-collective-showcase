@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import { Minus, Plus, X, Lock, Check, Loader2, CheckCircle } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useMembership } from "@/contexts/MembershipContext";
@@ -7,6 +7,8 @@ import { useMembership } from "@/contexts/MembershipContext";
 const JOINIT_URL = "https://app.joinit.com/o/divine-collective/members";
 
 const CartPage = () => {
+  const shopAccess = sessionStorage.getItem("shopAccess") === "true";
+  if (!shopAccess) return <Navigate to="/categories" replace />;
   const { items, removeFromCart, updateQuantity, cartTotal } = useCart();
   const { isMember, verifyWithJoinIt } = useMembership();
   const navigate = useNavigate();
