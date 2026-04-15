@@ -84,6 +84,7 @@ export type Database = {
           payment_type: string | null
           phone: string | null
           postal_code: string | null
+          referred_by: string | null
           status: string
           total: number
         }
@@ -99,6 +100,7 @@ export type Database = {
           payment_type?: string | null
           phone?: string | null
           postal_code?: string | null
+          referred_by?: string | null
           status?: string
           total?: number
         }
@@ -114,6 +116,7 @@ export type Database = {
           payment_type?: string | null
           phone?: string | null
           postal_code?: string | null
+          referred_by?: string | null
           status?: string
           total?: number
         }

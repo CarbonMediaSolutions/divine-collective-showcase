@@ -12,6 +12,8 @@ const CheckoutPage = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [discountCode, setDiscountCode] = useState("");
   const [discountApplied, setDiscountApplied] = useState(false);
+  const [referralAgent, setReferralAgent] = useState(() => sessionStorage.getItem("referral_agent") || "");
+  const [manualReferral, setManualReferral] = useState("");
 
   const shopAccess = sessionStorage.getItem("shopAccess") === "true";
   if (!shopAccess) return <Navigate to="/categories" replace />;
@@ -42,6 +44,7 @@ const CheckoutPage = () => {
 
     try {
       // Store pending order for post-payment save
+      const activeReferral = referralAgent || manualReferral.trim().toUpperCase() || null;
       localStorage.setItem("pendingOrder", JSON.stringify({
         customer_name: form.name,
         email: form.email,
@@ -51,6 +54,7 @@ const CheckoutPage = () => {
         postal_code: form.postalCode,
         items: items.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
         total: finalTotal,
+        referred_by: activeReferral,
       }));
 
       const { data, error: fnError } = await supabase.functions.invoke("create-bobpay-payment", {
@@ -141,6 +145,20 @@ const CheckoutPage = () => {
             </div>
             {discountApplied && (
               <p className="text-green-600 text-xs mt-2">✓ Test discount applied — total is now R10.00</p>
+            )}
+
+            {/* Referral Code */}
+            {referralAgent ? (
+              <p className="text-primary/80 text-xs mt-4">✓ Referred by: <span className="font-semibold">{referralAgent}</span></p>
+            ) : (
+              <div className="flex gap-2 mt-4">
+                <input
+                  className={inputClass + " flex-1"}
+                  placeholder="Referral Code (optional)"
+                  value={manualReferral}
+                  onChange={(e) => setManualReferral(e.target.value)}
+                />
+              </div>
             )}
 
             {error && (

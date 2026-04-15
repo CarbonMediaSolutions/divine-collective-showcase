@@ -20,6 +20,7 @@ interface Order {
   status: string;
   payment_ref: string | null;
   payment_type: string | null;
+  referred_by: string | null;
   created_at: string;
 }
 
@@ -286,6 +287,7 @@ const SalesTab = () => {
                 <TableHead className="text-right">Total</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Ref</TableHead>
+                <TableHead>Agent</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -307,6 +309,7 @@ const SalesTab = () => {
                     <Badge variant="default" className="text-xs">{o.status}</Badge>
                   </TableCell>
                   <TableCell className="font-mono text-xs">{o.payment_ref || "—"}</TableCell>
+                  <TableCell className="text-sm font-semibold">{o.referred_by || "—"}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
