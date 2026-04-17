@@ -22,9 +22,11 @@ const Footer = () => {
         <div className="container-main grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Col 1 - Logo & desc */}
           <div>
-            <h3 className="text-[28px] font-serif font-black text-foreground italic leading-none mb-2">
-              dc.
-            </h3>
+            <img
+              src={divineWordmark}
+              alt="Divine Collective"
+              className="h-12 w-auto mb-2"
+            />
             <p className="text-sm text-muted-foreground leading-snug mt-3">
               The Divine Collective delivers premium cannabis products and accessories throughout South Africa. Explore our exclusive club and trusted dispensary.
             </p>
