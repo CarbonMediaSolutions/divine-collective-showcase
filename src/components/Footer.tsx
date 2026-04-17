@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { MapPin, Phone, Mail } from "lucide-react";
+import divineWordmark from "@/assets/divine-wordmark.png";
 
 const JOINIT_URL = "https://app.joinit.com/o/divine-collective/members";
 
