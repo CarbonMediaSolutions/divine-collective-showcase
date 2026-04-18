@@ -10,7 +10,7 @@ import TopBar from "./components/TopBar";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import AgeVerification from "./components/AgeVerification";
-import WhatsAppButton from "./components/WhatsAppButton";
+
 import ScrollToTop from "./components/ScrollToTop";
 import HomePage from "./pages/HomePage";
 import CategoriesPage from "./pages/CategoriesPage";
@@ -74,7 +74,6 @@ const App = () => {
                         </Routes>
                       </main>
                       <Footer />
-                      <WhatsAppButton />
                     </div>
                   </>
                 } />
