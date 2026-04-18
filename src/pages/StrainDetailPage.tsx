@@ -47,6 +47,7 @@ type Strain = {
   image_url: string;
   in_stock: boolean;
   featured: boolean;
+  is_preroll: boolean;
 };
 
 const StrainDetailPage = () => {
@@ -148,6 +149,11 @@ const StrainDetailPage = () => {
               >
                 {strain.in_stock ? "In Stock" : "Out of Stock"}
               </span>
+              {strain.is_preroll && (
+                <span className="px-4 py-1.5 rounded-full text-[12px] font-bold tracking-wider bg-primary text-primary-foreground">
+                  Available as Pre-Roll
+                </span>
+              )}
             </div>
           </div>
 

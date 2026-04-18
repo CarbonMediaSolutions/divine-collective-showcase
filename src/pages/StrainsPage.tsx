@@ -18,9 +18,10 @@ type Strain = {
   image_url: string;
   in_stock: boolean;
   featured: boolean;
+  is_preroll: boolean;
 };
 
-const filters = ["ALL", "INDICA", "SATIVA", "HYBRID", "FEATURED", "IN STOCK"] as const;
+const filters = ["ALL", "INDICA", "SATIVA", "HYBRID", "FEATURED", "IN STOCK", "PRE-ROLL"] as const;
 
 const StrainsPage = () => {
   const [activeFilter, setActiveFilter] = useState<string>("ALL");
@@ -44,8 +45,11 @@ const StrainsPage = () => {
     if (activeFilter === "ALL") return true;
     if (activeFilter === "FEATURED") return s.featured;
     if (activeFilter === "IN STOCK") return s.in_stock;
+    if (activeFilter === "PRE-ROLL") return s.is_preroll;
     return s.category.toUpperCase() === activeFilter;
   });
+
+  const preRollStrains = strains.filter((s) => s.is_preroll);
 
   return (
     <div className="min-h-screen bg-background">
@@ -63,6 +67,63 @@ const StrainsPage = () => {
       </section>
 
       <div className="container-main py-8 md:py-12">
+        {/* Pre-Roll Strains Section */}
+        {!isLoading && preRollStrains.length > 0 && (
+          <section className="mb-10 md:mb-12">
+            <div className="flex items-baseline justify-between mb-4">
+              <div>
+                <h2 className="font-serif text-xl md:text-2xl font-bold text-primary">
+                  Available as Pre-Rolls
+                </h2>
+                <p className="text-[13px] text-muted-foreground mt-0.5">
+                  These strains are also available pre-rolled and ready to enjoy.
+                </p>
+              </div>
+              <span className="text-[11px] font-semibold tracking-wider text-muted-foreground hidden sm:inline">
+                {preRollStrains.length} {preRollStrains.length === 1 ? "STRAIN" : "STRAINS"}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+              {preRollStrains.map((strain) => {
+                const catColors = getCategoryColors(strain.category);
+                return (
+                  <Link
+                    key={strain.id}
+                    to={`/strains/${strain.slug}`}
+                    className="bg-card rounded-lg overflow-hidden border border-border/10 hover:border-primary/40 transition-all group"
+                  >
+                    <div className="relative aspect-square bg-muted overflow-hidden">
+                      {strain.image_url ? (
+                        <img
+                          src={strain.image_url}
+                          alt={strain.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Leaf className="text-primary/20" size={40} />
+                        </div>
+                      )}
+                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider bg-primary text-primary-foreground">
+                        PRE-ROLL
+                      </span>
+                    </div>
+                    <div className="p-3">
+                      <p className="font-serif text-[14px] font-bold text-primary truncate">{strain.name}</p>
+                      <span
+                        className="inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider"
+                        style={{ backgroundColor: catColors.bg, color: catColors.text }}
+                      >
+                        {strain.category.toUpperCase()}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {/* Search + Filters */}
         <div className="flex flex-col md:flex-row md:items-center gap-4 mb-8">
           <div className="relative flex-1 max-w-sm">

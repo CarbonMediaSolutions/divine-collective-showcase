@@ -31,6 +31,7 @@ interface Strain {
   in_stock: boolean | null;
   featured: boolean | null;
   visible: boolean | null;
+  is_preroll: boolean | null;
   grow_difficulty: string | null;
   grow_info: string | null;
   created_at: string | null;
@@ -54,6 +55,7 @@ const emptyStrain: Omit<Strain, "id" | "created_at"> = {
   in_stock: true,
   featured: false,
   visible: false,
+  is_preroll: false,
   grow_difficulty: "Intermediate",
   grow_info: "",
 };
@@ -62,7 +64,7 @@ const StrainsTab = () => {
   const [strains, setStrains] = useState<Strain[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [visibilityFilter, setVisibilityFilter] = useState<"all" | "visible" | "hidden">("all");
+  const [visibilityFilter, setVisibilityFilter] = useState<"all" | "visible" | "hidden" | "prerolls">("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Strain | null>(null);
   const [form, setForm] = useState(emptyStrain);
@@ -126,6 +128,7 @@ const StrainsTab = () => {
     }
     if (visibilityFilter === "visible") result = result.filter((s) => s.visible);
     if (visibilityFilter === "hidden") result = result.filter((s) => !s.visible);
+    if (visibilityFilter === "prerolls") result = result.filter((s) => s.is_preroll);
     return result;
   }, [search, strains, visibilityFilter]);
 
@@ -136,6 +139,16 @@ const StrainsTab = () => {
     if (error) {
       toast.error("Failed to update visibility");
       setStrains((prev) => prev.map((s) => s.id === strain.id ? { ...s, visible: !newVal } : s));
+    }
+  };
+
+  const handleTogglePreroll = async (strain: Strain) => {
+    const newVal = !strain.is_preroll;
+    setStrains((prev) => prev.map((s) => s.id === strain.id ? { ...s, is_preroll: newVal } : s));
+    const { error } = await supabase.from("strains").update({ is_preroll: newVal }).eq("id", strain.id);
+    if (error) {
+      toast.error("Failed to update pre-roll status");
+      setStrains((prev) => prev.map((s) => s.id === strain.id ? { ...s, is_preroll: !newVal } : s));
     }
   };
 
@@ -167,6 +180,7 @@ const StrainsTab = () => {
       in_stock: s.in_stock,
       featured: s.featured,
       visible: s.visible,
+      is_preroll: s.is_preroll,
       grow_difficulty: s.grow_difficulty || "Intermediate",
       grow_info: s.grow_info || "",
     });
@@ -229,6 +243,7 @@ const StrainsTab = () => {
         image_url: imageUrl,
         in_stock: form.in_stock,
         featured: form.featured,
+        is_preroll: form.is_preroll,
         grow_difficulty: form.grow_difficulty,
         grow_info: form.grow_info,
       };
@@ -266,7 +281,7 @@ const StrainsTab = () => {
         </div>
         <span className="text-sm text-muted-foreground">{filtered.length} strains</span>
         <div className="flex gap-1">
-          {(["all", "visible", "hidden"] as const).map((f) => (
+          {(["all", "visible", "hidden", "prerolls"] as const).map((f) => (
             <button
               key={f}
               onClick={() => setVisibilityFilter(f)}
@@ -276,7 +291,7 @@ const StrainsTab = () => {
                   : "bg-card border border-border/20 text-foreground/70 hover:border-primary/40"
               }`}
             >
-              {f.toUpperCase()}
+              {f === "prerolls" ? "PRE-ROLLS" : f.toUpperCase()}
             </button>
           ))}
         </div>
@@ -298,6 +313,7 @@ const StrainsTab = () => {
                 <TableHead>THC%</TableHead>
                 <TableHead>Feelings</TableHead>
                 <TableHead>Visible</TableHead>
+                <TableHead>Pre-Roll</TableHead>
                 <TableHead>Stock</TableHead>
                 <TableHead>Featured</TableHead>
                 <TableHead className="w-[100px]">Actions</TableHead>
@@ -323,6 +339,9 @@ const StrainsTab = () => {
                   </TableCell>
                   <TableCell>
                     <Switch checked={!!s.visible} onCheckedChange={() => handleToggleVisible(s)} />
+                  </TableCell>
+                  <TableCell>
+                    <Switch checked={!!s.is_preroll} onCheckedChange={() => handleTogglePreroll(s)} />
                   </TableCell>
                   <TableCell>
                     <Badge variant={s.in_stock ? "default" : "destructive"} className="text-xs">
@@ -518,6 +537,10 @@ const StrainsTab = () => {
               <div className="flex items-center gap-2">
                 <Switch checked={!!form.featured} onCheckedChange={(v) => setForm((f) => ({ ...f, featured: v }))} />
                 <Label>Featured</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={!!form.is_preroll} onCheckedChange={(v) => setForm((f) => ({ ...f, is_preroll: v }))} />
+                <Label>Pre-Roll</Label>
               </div>
             </div>
 
