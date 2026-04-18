@@ -1,0 +1,1 @@
+ALTER TABLE public.strains ADD COLUMN is_preroll boolean DEFAULT false;
