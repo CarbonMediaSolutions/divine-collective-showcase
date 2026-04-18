@@ -138,6 +138,7 @@ export type Database = {
           id: string
           image_url: string | null
           in_stock: boolean | null
+          is_preroll: boolean | null
           name: string
           parents: string | null
           slug: string
@@ -161,6 +162,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           in_stock?: boolean | null
+          is_preroll?: boolean | null
           name: string
           parents?: string | null
           slug: string
@@ -184,6 +186,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           in_stock?: boolean | null
+          is_preroll?: boolean | null
           name?: string
           parents?: string | null
           slug?: string
