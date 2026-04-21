@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      lightspeed_tokens: {
+        Row: {
+          access_token: string
+          created_at: string
+          domain_prefix: string
+          expires_at: string
+          id: string
+          last_sync_at: string | null
+          refresh_token: string
+          scope: string | null
+          updated_at: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          domain_prefix: string
+          expires_at: string
+          id?: string
+          last_sync_at?: string | null
+          refresh_token: string
+          scope?: string | null
+          updated_at?: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          domain_prefix?: string
+          expires_at?: string
+          id?: string
+          last_sync_at?: string | null
+          refresh_token?: string
+          scope?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       members: {
         Row: {
           birthday: string | null
@@ -132,6 +168,7 @@ export type Database = {
           image_url: string | null
           in_stock: boolean | null
           legacy_id: number | null
+          lightspeed_id: string | null
           name: string
           price: number
           sale_price: number | null
@@ -150,6 +187,7 @@ export type Database = {
           image_url?: string | null
           in_stock?: boolean | null
           legacy_id?: number | null
+          lightspeed_id?: string | null
           name: string
           price?: number
           sale_price?: number | null
@@ -168,6 +206,7 @@ export type Database = {
           image_url?: string | null
           in_stock?: boolean | null
           legacy_id?: number | null
+          lightspeed_id?: string | null
           name?: string
           price?: number
           sale_price?: number | null
