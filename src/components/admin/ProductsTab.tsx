@@ -53,6 +53,7 @@ const ProductsTab = () => {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [visibilityFilter, setVisibilityFilter] = useState<"all" | "visible" | "hidden">("all");
+  const [sortBy, setSortBy] = useState<"name-asc" | "name-desc" | "category-asc" | "category-desc">("name-asc");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [form, setForm] = useState(emptyProduct);
@@ -83,8 +84,24 @@ const ProductsTab = () => {
     if (categoryFilter !== "all") result = result.filter((p) => p.category === categoryFilter);
     if (visibilityFilter === "visible") result = result.filter((p) => p.visible);
     if (visibilityFilter === "hidden") result = result.filter((p) => !p.visible);
-    return result;
-  }, [search, products, categoryFilter, visibilityFilter]);
+
+    const sorted = [...result];
+    sorted.sort((a, b) => {
+      switch (sortBy) {
+        case "name-asc":
+          return a.name.localeCompare(b.name);
+        case "name-desc":
+          return b.name.localeCompare(a.name);
+        case "category-asc":
+          return a.category.localeCompare(b.category) || a.name.localeCompare(b.name);
+        case "category-desc":
+          return b.category.localeCompare(a.category) || a.name.localeCompare(b.name);
+        default:
+          return 0;
+      }
+    });
+    return sorted;
+  }, [search, products, categoryFilter, visibilityFilter, sortBy]);
 
   const generateSlug = (name: string) =>
     name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -230,6 +247,15 @@ const ProductsTab = () => {
           <SelectContent>
             <SelectItem value="all">All categories</SelectItem>
             {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Sort by" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="name-asc">Name (A → Z)</SelectItem>
+            <SelectItem value="name-desc">Name (Z → A)</SelectItem>
+            <SelectItem value="category-asc">Category (A → Z)</SelectItem>
+            <SelectItem value="category-desc">Category (Z → A)</SelectItem>
           </SelectContent>
         </Select>
         <div className="flex gap-1">
