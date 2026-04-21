@@ -13,7 +13,8 @@ interface ProductCardProps {
 const ProductCard = ({ product, strainData }: ProductCardProps) => {
   const { addToCart } = useCart();
 
-  const displayImage = strainData?.image_url || product.image;
+  // Prefer product image; fall back to strain image when missing (esp. for Flowers)
+  const displayImage = product.image || strainData?.image_url || "";
   const strainCategory = strainData?.category;
 
   const handleAddToCart = (e: React.MouseEvent) => {
