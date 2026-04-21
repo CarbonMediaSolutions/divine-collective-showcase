@@ -103,63 +103,6 @@ const AdminDashboard = () => {
   );
 };
 
-/* ─── Products Tab ─── */
-const ProductsTab = () => {
-  const [search, setSearch] = useState("");
-
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    if (!q) return products;
-    return products.filter(
-      (p) => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q) || p.sku.includes(q)
-    );
-  }, [search]);
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
-          <Input placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
-        </div>
-        <span className="text-sm text-muted-foreground">{filtered.length} products</span>
-      </div>
-      <div className="border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>SKU</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead className="text-right">Price</TableHead>
-              <TableHead className="text-right">Sale</TableHead>
-              <TableHead>Stock</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.slice(0, 100).map((p) => (
-              <TableRow key={p.id}>
-                <TableCell className="font-mono text-xs">{p.sku}</TableCell>
-                <TableCell className="font-medium max-w-[200px] truncate">{p.name}</TableCell>
-                <TableCell>{p.category}</TableCell>
-                <TableCell className="text-right">R{p.price.toFixed(2)}</TableCell>
-                <TableCell className="text-right">{p.salePrice ? `R${p.salePrice.toFixed(2)}` : "—"}</TableCell>
-                <TableCell>
-                  <Badge variant={p.inStock ? "default" : "destructive"} className="text-xs">
-                    {p.inStock ? "In Stock" : "Out"}
-                  </Badge>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        {filtered.length > 100 && (
-          <p className="text-center text-sm text-muted-foreground py-3">Showing first 100 of {filtered.length} results</p>
-        )}
-      </div>
-    </div>
-  );
-};
 
 /* ─── Members Tab ─── */
 const MembersTab = () => {
