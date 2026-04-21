@@ -1,77 +1,55 @@
 
 
-# Full Product Backend with AI-Assisted Descriptions
+# Lightspeed Retail OAuth + Product Sync
 
-## Goal
-Replace the static `src/data/products.ts` file with a database-backed product catalog. Admin gets a full CRUD interface (image upload, title, price, stock, description, category, sale price) plus a one-click AI button that auto-generates a product description from just the product name.
+## What to enter in the Lightspeed "Add Application" form
 
-## What You'll Be Able to Do
-- Add a new product from `/admin` → Products tab
-- Upload a product photo (stored in Lovable Cloud, no more broken WordPress links)
-- Edit name, price, sale price, category, SKU, stock status, visibility, featured flag
-- Click **"Generate description with AI"** — fills the description field based on the product name + category
-- Edit/delete existing products inline
-- Toggle visibility/stock from the table (mirrors the Strains tab pattern)
-- Public shop pages (`CategoriesPage`, `ProductPage`, cart) read live from the database
+**Application Name:** `DivineCollective` (already filled in)
 
-## Implementation
+**Redirect URL:**
+```
+https://fthoygccccipiezsmzci.supabase.co/functions/v1/lightspeed-oauth-callback
+```
 
-### 1. Database (migration)
-New `products` table:
-- `id`, `name`, `slug` (unique), `sku`, `category`, `price`, `sale_price` (nullable)
-- `description` (text), `image_url` (text)
-- `in_stock`, `visible`, `featured` (booleans, sensible defaults)
-- `created_at`, `updated_at`
+This URL must match **exactly** what Lightspeed has registered (no trailing slash, no extra params). If you ever change it in Lightspeed, you must change it here too.
 
-Public read RLS, public write (matches existing strains pattern — admin password gates access at the UI layer).
+> Heads up: a personal access token would be much simpler (no callback URL needed, no OAuth dance), but Lightspeed only allows personal tokens on the **Plus plan**. If you're on Plus, just generate a personal token instead and skip the entire OAuth setup — much less to build.
 
-### 2. Storage
-New public `product-images` Lovable Cloud storage bucket with public-read + public-write policies (mirrors `strain-images`).
+## Build Plan (assuming OAuth route)
 
-### 3. Seed
-One-off insert of all ~150 entries from `src/data/products.ts` into the new table so nothing disappears on launch. The broken WordPress image URLs come over as-is — you can replace each via the new admin upload UI as you go (or we batch-clear them to placeholders, your call).
+### 1. Save credentials as secrets
+After creating the app in Lightspeed, you'll get a **Client ID** and **Client Secret**. Both stored as Lovable Cloud secrets:
+- `LIGHTSPEED_CLIENT_ID`
+- `LIGHTSPEED_CLIENT_SECRET`
+- `LIGHTSPEED_DOMAIN_PREFIX` (set after first successful auth)
 
-### 4. AI description edge function
-New `generate-product-description` edge function:
-- Input: `{ name, category }`
-- Calls Lovable AI Gateway (`google/gemini-3-flash-preview`)
-- System prompt tuned for premium cannabis product copy: 2–3 sentences, warm editorial tone matching the brand voice, mentions category-appropriate details (effects for edibles, hardware for vapes, etc.), no medical claims, SA-market appropriate
-- Returns `{ description }`
+### 2. Database
+New `lightspeed_tokens` table to store the access token, refresh token, expiry, and domain prefix (single-row table, only one connected store).
 
-### 5. Admin UI (`src/components/admin/ProductsTab.tsx` — full rewrite)
-Replaces the current read-only table. Includes:
-- **Search + category filter** row
-- **"+ Add Product"** button → opens edit dialog with empty fields
-- **Table** with inline switches for Visible / In Stock / Featured (like StrainsTab)
-- **Edit dialog** per product with:
-  - Image upload (drop zone → uploads to `product-images` bucket → stores public URL)
-  - Name, SKU, Category (dropdown), Price, Sale Price, Stock toggle
-  - Description textarea with **"✨ Generate with AI"** button above it
-  - Save / Delete buttons
+### 3. Edge functions (3 new)
+- **`lightspeed-oauth-start`** — builds the authorization URL with a random `state` and redirects the admin to Lightspeed
+- **`lightspeed-oauth-callback`** — receives `?code=...&domain_prefix=...&state=...`, exchanges the code for tokens at `https://{domain_prefix}.retail.lightspeed.app/api/1.0/token`, saves tokens to `lightspeed_tokens`, redirects back to `/admin?lightspeed=connected`
+- **`sync-lightspeed-products`** — uses the saved access token (auto-refreshes if expired), pulls all products from `GET /api/2.0/products` (paginated), downloads each image to the `product-images` Lovable Cloud bucket, upserts rows into the existing `products` table by `lightspeed_id`
 
-### 6. Public shop refactor
-- `src/data/products.ts` → keep the file as a thin re-export of a typed `Product` interface only (no data), OR delete entirely
-- New `src/hooks/useProducts.ts` to fetch from the `products` table (with category filter)
-- Update `CategoriesPage.tsx`, `ProductPage.tsx`, `CartContext.tsx` to read from the DB
-- Cart context already stores product snapshots, so existing carts keep working
+### 4. Admin UI additions (`src/components/admin/ProductsTab.tsx`)
+- New "Lightspeed" panel at the top showing connection status
+- **"Connect Lightspeed"** button → opens `/functions/v1/lightspeed-oauth-start` in a new tab
+- Once connected: shows store domain prefix + last sync time + **"Sync Now"** button
+- Disconnect button to clear tokens
 
-### 7. Admin dashboard wiring
-The Products tab in `src/pages/AdminPage.tsx` swaps from the current static `ProductsTab` to the new DB-backed one.
+### 5. Category mapping
+Lightspeed product types won't match your shop categories (Edibles, Vapes, Concentrates, Accessories, Pre-rolls, Flower) one-to-one. After the first sync we'll see the real Lightspeed categories and add a small mapping table you can edit in admin.
 
 ## Files
 | Action | File |
-|--------|------|
-| Migration | New `products` table + RLS + `product-images` storage bucket + policies |
-| Seed | One-off insert of existing products from `src/data/products.ts` |
-| New | `supabase/functions/generate-product-description/index.ts` |
-| New | `src/components/admin/ProductsTab.tsx` (full CRUD with AI button) |
-| New | `src/hooks/useProducts.ts` |
-| Modify | `src/pages/AdminPage.tsx` (use new ProductsTab) |
-| Modify | `src/pages/CategoriesPage.tsx`, `src/pages/ProductPage.tsx`, `src/contexts/CartContext.tsx` (read from DB) |
-| Slim down | `src/data/products.ts` (keep only the `Product` type, or delete) |
+|---|---|
+| Migration | `lightspeed_tokens` table + add `lightspeed_id` (unique) to `products` |
+| Secret | `LIGHTSPEED_CLIENT_ID`, `LIGHTSPEED_CLIENT_SECRET` |
+| New | `supabase/functions/lightspeed-oauth-start/index.ts` |
+| New | `supabase/functions/lightspeed-oauth-callback/index.ts` |
+| New | `supabase/functions/sync-lightspeed-products/index.ts` |
+| Modify | `src/components/admin/ProductsTab.tsx` (Lightspeed panel) |
 
-## Notes
-- Lovable AI is already wired up (`LOVABLE_API_KEY` is in your secrets), so the AI button works out of the box with no extra setup from you
-- The Lightspeed sync conversation from earlier is still on the table — this admin backend would happily coexist with a future Lightspeed sync (the sync would just upsert into the same `products` table)
-- Broken WordPress images will keep showing as broken in the public shop until you re-upload via the new admin — want me to swap them all to a clean placeholder during the migration so the shop looks polished immediately? Say the word and I'll add that to step 3.
+## Before you approve — quick check
+**Are you on the Lightspeed Plus plan?** If yes, I'd strongly recommend skipping all of this and using a Personal Access Token instead. Setup is literally: paste the token into a secret, done. Tell me your plan and I'll adjust the plan accordingly.
 
