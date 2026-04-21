@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Search, Plus, Edit2, Trash2, Upload, X, Save, Sparkles } from "lucide-react";
+import { Search, Plus, Edit2, Trash2, Upload, X, Save, Sparkles, ImageDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -72,6 +72,29 @@ const StrainsTab = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const [autoFilling, setAutoFilling] = useState(false);
+  const [migrating, setMigrating] = useState(false);
+
+  const handleMigrateImages = async () => {
+    if (!confirm("Re-host external strain images to Lovable Cloud and sync Flowers products? This may take a minute.")) return;
+    setMigrating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("migrate-strain-images");
+      if (error) throw error;
+      const r = data?.results || [];
+      const rehosted = r.filter((x: any) => x.action === "rehosted").length;
+      const generated = r.filter((x: any) => x.action === "generated").length;
+      const skipped = r.filter((x: any) => x.action === "skipped").length;
+      const failed = r.filter((x: any) => x.action === "failed").length;
+      toast.success(
+        `Done — ${rehosted} re-hosted, ${generated} generated, ${skipped} skipped, ${failed} failed. ${data?.productsUpdated ?? 0} products updated.`,
+      );
+      await fetchStrains();
+    } catch (e: any) {
+      toast.error(e.message || "Migration failed");
+    } finally {
+      setMigrating(false);
+    }
+  };
 
   const handleAutoFill = async () => {
     if (!form.name || form.name.trim().length < 2) {
@@ -295,6 +318,17 @@ const StrainsTab = () => {
             </button>
           ))}
         </div>
+        <Button
+          onClick={handleMigrateImages}
+          size="sm"
+          variant="outline"
+          className="gap-2"
+          disabled={migrating}
+          title="Download external strain images to Lovable Cloud, AI-generate any missing, then sync Flowers products"
+        >
+          <ImageDown size={16} className={migrating ? "animate-pulse" : ""} />
+          {migrating ? "Migrating..." : "Migrate Images"}
+        </Button>
         <Button onClick={openNew} size="sm" className="gap-2">
           <Plus size={16} /> Add Strain
         </Button>
