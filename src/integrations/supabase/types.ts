@@ -122,6 +122,63 @@ export type Database = {
         }
         Relationships: []
       }
+      products: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          featured: boolean | null
+          id: string
+          image_url: string | null
+          in_stock: boolean | null
+          legacy_id: number | null
+          name: string
+          price: number
+          sale_price: number | null
+          sku: string | null
+          slug: string
+          subcategory: string | null
+          updated_at: string
+          visible: boolean | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          featured?: boolean | null
+          id?: string
+          image_url?: string | null
+          in_stock?: boolean | null
+          legacy_id?: number | null
+          name: string
+          price?: number
+          sale_price?: number | null
+          sku?: string | null
+          slug: string
+          subcategory?: string | null
+          updated_at?: string
+          visible?: boolean | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          featured?: boolean | null
+          id?: string
+          image_url?: string | null
+          in_stock?: boolean | null
+          legacy_id?: number | null
+          name?: string
+          price?: number
+          sale_price?: number | null
+          sku?: string | null
+          slug?: string
+          subcategory?: string | null
+          updated_at?: string
+          visible?: boolean | null
+        }
+        Relationships: []
+      }
       strains: {
         Row: {
           category: string
