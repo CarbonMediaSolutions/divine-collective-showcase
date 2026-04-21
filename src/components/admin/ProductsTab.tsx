@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import LightspeedPanel from "./LightspeedPanel";
 
 interface Product {
   id: string;
@@ -218,6 +219,7 @@ const ProductsTab = () => {
 
   return (
     <div className="space-y-4">
+      <LightspeedPanel onSyncComplete={fetchProducts} />
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
