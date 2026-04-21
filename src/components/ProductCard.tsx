@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
-import type { Product } from "@/data/products";
+import type { Product } from "@/hooks/useProducts";
 import type { StrainData } from "@/hooks/useFlowerStrainData";
 import { getCategoryColors } from "@/lib/strainUtils";
 

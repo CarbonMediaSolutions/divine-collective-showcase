@@ -4,9 +4,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { products } from "@/data/products";
 import { supabase } from "@/integrations/supabase/client";
 import StrainsTab from "@/components/admin/StrainsTab";
+import ProductsTab from "@/components/admin/ProductsTab";
 
 const ADMIN_PASSWORD = "divine2026";
 

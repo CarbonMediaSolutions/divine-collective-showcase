@@ -1,5 +1,5 @@
 import { useParams, Link, Navigate } from "react-router-dom";
-import { getProductBySlug, getRelatedProducts } from "@/data/products";
+import { useProductBySlug, useProducts } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
@@ -9,7 +9,8 @@ import { getCategoryColors, getFeelingColor } from "@/lib/strainUtils";
 const ProductPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const { addToCart } = useCart();
-  const product = slug ? getProductBySlug(slug) : undefined;
+  const { data: product, isLoading } = useProductBySlug(slug);
+  const { data: allProducts = [] } = useProducts();
 
   const isFlower = product?.category === "Flowers";
   const { data: strainData } = useStrainByName(isFlower ? product!.name : "");
@@ -17,6 +18,16 @@ const ProductPage = () => {
 
   const shopAccess = sessionStorage.getItem("shopAccess") === "true";
   if (!shopAccess) return <Navigate to="/categories" replace />;
+
+  if (isLoading) {
+    return (
+      <div className="section-padding bg-background">
+        <div className="container-main text-center">
+          <p className="text-muted-foreground">Loading product...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -34,7 +45,7 @@ const ProductPage = () => {
     );
   }
 
-  const related = getRelatedProducts(product, 4);
+  const related = allProducts.filter((p) => p.category === product.category && p.uuid !== product.uuid).slice(0, 4);
   const displayPrice =
     product.salePrice !== null && product.salePrice < product.price
       ? product.salePrice
@@ -237,7 +248,7 @@ const ProductPage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {related.map((p) => (
                 <ProductCard
-                  key={p.id}
+                  key={p.uuid}
                   product={p}
                   strainData={p.category === "Flowers" ? strainMap?.get(p.name.toLowerCase()) : undefined}
                 />

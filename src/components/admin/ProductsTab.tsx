@@ -91,7 +91,8 @@ const ProductsTab = () => {
   const handleToggle = async (product: Product, field: "visible" | "in_stock" | "featured") => {
     const newVal = !product[field];
     setProducts((prev) => prev.map((p) => p.id === product.id ? { ...p, [field]: newVal } : p));
-    const { error } = await supabase.from("products").update({ [field]: newVal }).eq("id", product.id);
+    const update: Record<string, boolean> = { [field]: newVal };
+    const { error } = await supabase.from("products").update(update as any).eq("id", product.id);
     if (error) {
       toast.error("Failed to update");
       setProducts((prev) => prev.map((p) => p.id === product.id ? { ...p, [field]: !newVal } : p));
