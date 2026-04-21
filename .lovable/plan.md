@@ -1,55 +1,53 @@
 
 
-# Lightspeed Retail OAuth + Product Sync
+# Use Strain Images as Product Images (Properly Hosted)
 
-## What to enter in the Lightspeed "Add Application" form
+## What's Actually Broken
+- All 10 Flowers products have empty `image_url` fields (that's why you see grey boxes)
+- The Strains table has URLs, but **9 of 10 still point to the dead WordPress site** — only Jungle Diamonds is hosted on Lovable Cloud
+- That's why Jungle Diamonds is the only flower image showing in your screenshot
 
-**Application Name:** `DivineCollective` (already filled in)
+So a simple "copy strain URL → product URL" SQL would just give you broken images on the products too. We need to download the working images, re-host them on Lovable Cloud, and link both strains and products to the new URLs.
 
-**Redirect URL:**
+## Plan
+
+### Step 1 — Re-host strain images on Lovable Cloud
+A one-off edge function `migrate-strain-images`:
+- Loops through all strains with a `wp-content/uploads` URL
+- Fetches each image (server-side, no browser hotlink issues)
+- Uploads to the existing `strain-images` storage bucket
+- Updates the strain row with the new public Lovable Cloud URL
+- For the 2 strains with no image at all (Maui Wowie, Watermelon), generates a clean cannabis flower image using Nano Banana and uploads that
+
+I'll trigger it once from the admin panel via a new "Migrate strain images" button.
+
+### Step 2 — Link Flowers products to their strain images
+Database migration that runs:
+```sql
+UPDATE products p
+SET image_url = s.image_url
+FROM strains s
+WHERE p.category = 'Flowers'
+  AND LOWER(s.name) = LOWER(p.name)
+  AND s.image_url IS NOT NULL AND s.image_url != '';
 ```
-https://fthoygccccipiezsmzci.supabase.co/functions/v1/lightspeed-oauth-callback
-```
 
-This URL must match **exactly** what Lightspeed has registered (no trailing slash, no extra params). If you ever change it in Lightspeed, you must change it here too.
+This runs **after** Step 1, so the URLs being copied are the new working Lovable Cloud URLs, not the dead WordPress ones.
 
-> Heads up: a personal access token would be much simpler (no callback URL needed, no OAuth dance), but Lightspeed only allows personal tokens on the **Plus plan**. If you're on Plus, just generate a personal token instead and skip the entire OAuth setup — much less to build.
-
-## Build Plan (assuming OAuth route)
-
-### 1. Save credentials as secrets
-After creating the app in Lightspeed, you'll get a **Client ID** and **Client Secret**. Both stored as Lovable Cloud secrets:
-- `LIGHTSPEED_CLIENT_ID`
-- `LIGHTSPEED_CLIENT_SECRET`
-- `LIGHTSPEED_DOMAIN_PREFIX` (set after first successful auth)
-
-### 2. Database
-New `lightspeed_tokens` table to store the access token, refresh token, expiry, and domain prefix (single-row table, only one connected store).
-
-### 3. Edge functions (3 new)
-- **`lightspeed-oauth-start`** — builds the authorization URL with a random `state` and redirects the admin to Lightspeed
-- **`lightspeed-oauth-callback`** — receives `?code=...&domain_prefix=...&state=...`, exchanges the code for tokens at `https://{domain_prefix}.retail.lightspeed.app/api/1.0/token`, saves tokens to `lightspeed_tokens`, redirects back to `/admin?lightspeed=connected`
-- **`sync-lightspeed-products`** — uses the saved access token (auto-refreshes if expired), pulls all products from `GET /api/2.0/products` (paginated), downloads each image to the `product-images` Lovable Cloud bucket, upserts rows into the existing `products` table by `lightspeed_id`
-
-### 4. Admin UI additions (`src/components/admin/ProductsTab.tsx`)
-- New "Lightspeed" panel at the top showing connection status
-- **"Connect Lightspeed"** button → opens `/functions/v1/lightspeed-oauth-start` in a new tab
-- Once connected: shows store domain prefix + last sync time + **"Sync Now"** button
-- Disconnect button to clear tokens
-
-### 5. Category mapping
-Lightspeed product types won't match your shop categories (Edibles, Vapes, Concentrates, Accessories, Pre-rolls, Flower) one-to-one. After the first sync we'll see the real Lightspeed categories and add a small mapping table you can edit in admin.
+### Step 3 — Keep them in sync going forward
+Small change in `ProductCard.tsx` (it already accepts `strainData` as a prop): if the product is in Flowers and its `image_url` is empty, fall back to the matching strain's image automatically. So even if you add a new Flower product later without uploading an image, it'll pick up the strain photo if one exists.
 
 ## Files
 | Action | File |
 |---|---|
-| Migration | `lightspeed_tokens` table + add `lightspeed_id` (unique) to `products` |
-| Secret | `LIGHTSPEED_CLIENT_ID`, `LIGHTSPEED_CLIENT_SECRET` |
-| New | `supabase/functions/lightspeed-oauth-start/index.ts` |
-| New | `supabase/functions/lightspeed-oauth-callback/index.ts` |
-| New | `supabase/functions/sync-lightspeed-products/index.ts` |
-| Modify | `src/components/admin/ProductsTab.tsx` (Lightspeed panel) |
+| New | `supabase/functions/migrate-strain-images/index.ts` |
+| Modify | `src/components/admin/StrainsTab.tsx` (add "Migrate images" button) |
+| Migration | UPDATE products SET image_url FROM strains (Flowers only) |
+| Modify | `src/components/ProductCard.tsx` (fallback to strain image when product image is empty) |
 
-## Before you approve — quick check
-**Are you on the Lightspeed Plus plan?** If yes, I'd strongly recommend skipping all of this and using a Personal Access Token instead. Setup is literally: paste the token into a secret, done. Tell me your plan and I'll adjust the plan accordingly.
+## What you'll see after
+All 10 Flowers cards will show real photos. The 8 strains with WordPress URLs will be re-hosted on your own backend (faster, no hotlink risk, won't break if the old WP site disappears). Maui Wowie and Watermelon get clean AI-generated bud photos.
+
+## Note
+This only fixes **Flowers**. The other categories (Edibles, Vapes, Concentrates, etc.) still have broken WordPress URLs and no matching strain entries. Once Lightspeed sorting/sync is figured out, those will get real product photos from there. In the meantime if you want, I can also generate placeholder category images for them — say the word.
 
