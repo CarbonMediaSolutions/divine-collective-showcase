@@ -1,55 +1,77 @@
 
 
-# Fix Missing Product Images
+# Full Product Backend with AI-Assisted Descriptions
 
-## What's Happening
-All product images in the catalog point to the old WordPress site (`https://thedivinecollective.co.za/wp-content/uploads/...`). On your screenshot, only the alt text shows — the images aren't loading. This is almost always one of:
+## Goal
+Replace the static `src/data/products.ts` file with a database-backed product catalog. Admin gets a full CRUD interface (image upload, title, price, stock, description, category, sale price) plus a one-click AI button that auto-generates a product description from just the product name.
 
-1. **Hotlink protection** on the WordPress host blocking external sites from embedding images
-2. **CORS / referrer policy** stripping the request
-3. The WordPress media files have been moved or deleted
-4. A temporary outage on the source server
+## What You'll Be Able to Do
+- Add a new product from `/admin` → Products tab
+- Upload a product photo (stored in Lovable Cloud, no more broken WordPress links)
+- Edit name, price, sale price, category, SKU, stock status, visibility, featured flag
+- Click **"Generate description with AI"** — fills the description field based on the product name + category
+- Edit/delete existing products inline
+- Toggle visibility/stock from the table (mirrors the Strains tab pattern)
+- Public shop pages (`CategoriesPage`, `ProductPage`, cart) read live from the database
 
-The strain images that DO load are hosted on Lovable Cloud storage (Supabase) — those work because they're on your own infrastructure. The product (non-flower) images all rely on the external WP site, and those are what's broken.
+## Implementation
 
-## Where Images Live Today
-| Source | Location | Status |
-|---|---|---|
-| Flower / strain images | Lovable Cloud storage | ✅ Working |
-| Edibles, Vapes, Accessories, Concentrates | `thedivinecollective.co.za` (WordPress) | ❌ Not loading |
-| Category videos | `/public/videos/` (in your project) | ✅ Working |
+### 1. Database (migration)
+New `products` table:
+- `id`, `name`, `slug` (unique), `sku`, `category`, `price`, `sale_price` (nullable)
+- `description` (text), `image_url` (text)
+- `in_stock`, `visible`, `featured` (booleans, sensible defaults)
+- `created_at`, `updated_at`
 
-There are **~150+ products** referencing WordPress URLs in `src/data/products.ts`.
+Public read RLS, public write (matches existing strains pattern — admin password gates access at the UI layer).
 
-## Recommended Fix (Plan)
+### 2. Storage
+New public `product-images` Lovable Cloud storage bucket with public-read + public-write policies (mirrors `strain-images`).
 
-### Step 1 — Diagnose first (quick check)
-Open one broken image URL directly in a browser tab, e.g. `https://thedivinecollective.co.za/wp-content/uploads/2025/01/IMG_6328-scaled.jpg`. This tells us which scenario we're in:
-- Loads in browser but not in app → hotlink/referrer blocking → fixable with a referrer policy meta tag (1-line fix)
-- 404 / Forbidden → images are gone from WP → need re-upload
-- Loads everywhere → something else, investigate further
+### 3. Seed
+One-off insert of all ~150 entries from `src/data/products.ts` into the new table so nothing disappears on launch. The broken WordPress image URLs come over as-is — you can replace each via the new admin upload UI as you go (or we batch-clear them to placeholders, your call).
 
-### Step 2 — Apply the right fix
+### 4. AI description edge function
+New `generate-product-description` edge function:
+- Input: `{ name, category }`
+- Calls Lovable AI Gateway (`google/gemini-3-flash-preview`)
+- System prompt tuned for premium cannabis product copy: 2–3 sentences, warm editorial tone matching the brand voice, mentions category-appropriate details (effects for edibles, hardware for vapes, etc.), no medical claims, SA-market appropriate
+- Returns `{ description }`
 
-**If hotlink-blocked (most likely):**
-Add `<meta name="referrer" content="no-referrer">` to `index.html`. This stops the browser from sending the WordPress site a referrer header, bypassing most hotlink protection. Zero migration needed.
+### 5. Admin UI (`src/components/admin/ProductsTab.tsx` — full rewrite)
+Replaces the current read-only table. Includes:
+- **Search + category filter** row
+- **"+ Add Product"** button → opens edit dialog with empty fields
+- **Table** with inline switches for Visible / In Stock / Featured (like StrainsTab)
+- **Edit dialog** per product with:
+  - Image upload (drop zone → uploads to `product-images` bucket → stores public URL)
+  - Name, SKU, Category (dropdown), Price, Sale Price, Stock toggle
+  - Description textarea with **"✨ Generate with AI"** button above it
+  - Save / Delete buttons
 
-**If WP images are unreachable (worst case):**
-Migrate product images to Lovable Cloud storage. This means:
-- Create a `product-images` storage bucket
-- Write a one-off script to download each WP image and re-upload to your bucket
-- Update `src/data/products.ts` to point to the new URLs
-- Add an admin UI tab to upload/replace product images going forward (mirrors the existing strain image admin)
+### 6. Public shop refactor
+- `src/data/products.ts` → keep the file as a thin re-export of a typed `Product` interface only (no data), OR delete entirely
+- New `src/hooks/useProducts.ts` to fetch from the `products` table (with category filter)
+- Update `CategoriesPage.tsx`, `ProductPage.tsx`, `CartContext.tsx` to read from the DB
+- Cart context already stores product snapshots, so existing carts keep working
 
-### Step 3 — Long-term: bring product image management into the admin
-Right now product data lives in a static TypeScript file (`src/data/products.ts`). Strains live in the database with proper admin tooling. We should eventually move products to the database too so you can edit names, prices, images and stock from `/admin` instead of code. **Out of scope for this fix** — flag for a future task.
+### 7. Admin dashboard wiring
+The Products tab in `src/pages/AdminPage.tsx` swaps from the current static `ProductsTab` to the new DB-backed one.
 
-## Files Touched (depending on diagnosis)
-| Scenario | Files |
-|---|---|
-| Hotlink fix | `index.html` (1 meta tag) |
-| Full migration | New storage bucket migration, one-off upload script, `src/data/products.ts` rewrite, optional admin tab |
+## Files
+| Action | File |
+|--------|------|
+| Migration | New `products` table + RLS + `product-images` storage bucket + policies |
+| Seed | One-off insert of existing products from `src/data/products.ts` |
+| New | `supabase/functions/generate-product-description/index.ts` |
+| New | `src/components/admin/ProductsTab.tsx` (full CRUD with AI button) |
+| New | `src/hooks/useProducts.ts` |
+| Modify | `src/pages/AdminPage.tsx` (use new ProductsTab) |
+| Modify | `src/pages/CategoriesPage.tsx`, `src/pages/ProductPage.tsx`, `src/contexts/CartContext.tsx` (read from DB) |
+| Slim down | `src/data/products.ts` (keep only the `Product` type, or delete) |
 
-## Recommendation
-Start with **Step 1 diagnosis + the 1-line referrer meta tag fix**. It's free to try and resolves the most common cause. If images still don't load, we move to migration.
+## Notes
+- Lovable AI is already wired up (`LOVABLE_API_KEY` is in your secrets), so the AI button works out of the box with no extra setup from you
+- The Lightspeed sync conversation from earlier is still on the table — this admin backend would happily coexist with a future Lightspeed sync (the sync would just upsert into the same `products` table)
+- Broken WordPress images will keep showing as broken in the public shop until you re-upload via the new admin — want me to swap them all to a clean placeholder during the migration so the shop looks polished immediately? Say the word and I'll add that to step 3.
 
