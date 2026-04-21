@@ -1,37 +1,55 @@
 
 
-# Add Pre-Roll Strains Section
+# Fix Missing Product Images
 
-## Goal
-Let admin mark strains as available in pre-roll form, and surface a dedicated "Pre-Roll Strains" area on the public Strain Library page.
+## What's Happening
+All product images in the catalog point to the old WordPress site (`https://thedivinecollective.co.za/wp-content/uploads/...`). On your screenshot, only the alt text shows — the images aren't loading. This is almost always one of:
 
-## Approach
+1. **Hotlink protection** on the WordPress host blocking external sites from embedding images
+2. **CORS / referrer policy** stripping the request
+3. The WordPress media files have been moved or deleted
+4. A temporary outage on the source server
 
-### 1. Database
-Add `is_preroll boolean DEFAULT false` to the `strains` table. No backfill needed — admin will toggle as needed.
+The strain images that DO load are hosted on Lovable Cloud storage (Supabase) — those work because they're on your own infrastructure. The product (non-flower) images all rely on the external WP site, and those are what's broken.
 
-### 2. Admin (`src/components/admin/StrainsTab.tsx`)
-- Add a "Pre-Roll" toggle in the edit dialog (next to Visible / In Stock / Featured).
-- Add an inline "Pre-Roll" switch column in the table for quick toggling (mirrors the Visible toggle pattern).
-- Add a "PRE-ROLLS" chip to the visibility filter row so admin can quickly view only pre-roll strains.
+## Where Images Live Today
+| Source | Location | Status |
+|---|---|---|
+| Flower / strain images | Lovable Cloud storage | ✅ Working |
+| Edibles, Vapes, Accessories, Concentrates | `thedivinecollective.co.za` (WordPress) | ❌ Not loading |
+| Category videos | `/public/videos/` (in your project) | ✅ Working |
 
-### 3. Public Strain Library (`src/pages/StrainsPage.tsx`)
-At the top of the page (above the existing search + ALL/INDICA/SATIVA/HYBRID filters), add a new **"Available as Pre-Rolls"** section:
-- Horizontal scroll row (or 2-column grid on mobile, up to 4-column on desktop) of compact pre-roll strain cards.
-- Each card: small image, name, category pill, and a "PRE-ROLL" badge.
-- Clicking a card jumps to the strain detail page (same as main grid).
-- Section only renders if at least one visible pre-roll strain exists.
+There are **~150+ products** referencing WordPress URLs in `src/data/products.ts`.
 
-The existing full strain grid stays unchanged below it. Optionally, add a "PRE-ROLL" filter chip to the existing filter row so users can filter the main grid too.
+## Recommended Fix (Plan)
 
-### 4. Strain detail page
-Add a small "Available as Pre-Roll" badge near the THC pill when `is_preroll` is true (low effort, nice touch). Skip if you'd prefer minimal changes — let me know.
+### Step 1 — Diagnose first (quick check)
+Open one broken image URL directly in a browser tab, e.g. `https://thedivinecollective.co.za/wp-content/uploads/2025/01/IMG_6328-scaled.jpg`. This tells us which scenario we're in:
+- Loads in browser but not in app → hotlink/referrer blocking → fixable with a referrer policy meta tag (1-line fix)
+- 404 / Forbidden → images are gone from WP → need re-upload
+- Loads everywhere → something else, investigate further
 
-## Files
-| Action | File |
-|--------|------|
-| Migration | Add `is_preroll boolean DEFAULT false` to `strains` |
-| Modify | `src/components/admin/StrainsTab.tsx` |
-| Modify | `src/pages/StrainsPage.tsx` |
-| Modify | `src/pages/StrainDetailPage.tsx` (small badge) |
+### Step 2 — Apply the right fix
+
+**If hotlink-blocked (most likely):**
+Add `<meta name="referrer" content="no-referrer">` to `index.html`. This stops the browser from sending the WordPress site a referrer header, bypassing most hotlink protection. Zero migration needed.
+
+**If WP images are unreachable (worst case):**
+Migrate product images to Lovable Cloud storage. This means:
+- Create a `product-images` storage bucket
+- Write a one-off script to download each WP image and re-upload to your bucket
+- Update `src/data/products.ts` to point to the new URLs
+- Add an admin UI tab to upload/replace product images going forward (mirrors the existing strain image admin)
+
+### Step 3 — Long-term: bring product image management into the admin
+Right now product data lives in a static TypeScript file (`src/data/products.ts`). Strains live in the database with proper admin tooling. We should eventually move products to the database too so you can edit names, prices, images and stock from `/admin` instead of code. **Out of scope for this fix** — flag for a future task.
+
+## Files Touched (depending on diagnosis)
+| Scenario | Files |
+|---|---|
+| Hotlink fix | `index.html` (1 meta tag) |
+| Full migration | New storage bucket migration, one-off upload script, `src/data/products.ts` rewrite, optional admin tab |
+
+## Recommendation
+Start with **Step 1 diagnosis + the 1-line referrer meta tag fix**. It's free to try and resolves the most common cause. If images still don't load, we move to migration.
 
