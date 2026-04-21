@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link, useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { products, categories, getProductsByCategory } from "@/data/products";
+import { useProducts, categories } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
 import { useFlowerStrainData } from "@/hooks/useFlowerStrainData";
 import {
@@ -118,10 +118,13 @@ const CategoriesPage = () => {
   const [page, setPage] = useState(1);
 
   const { data: strainMap } = useFlowerStrainData();
+  const { data: products = [], isLoading } = useProducts();
 
   const filtered = useMemo(() => {
     if (!activeCategory) return [];
-    let items = getProductsByCategory(activeCategory);
+    let items = activeCategory === "All"
+      ? products
+      : products.filter((p) => p.category === activeCategory);
     switch (sortBy) {
       case "price-asc":
         items = [...items].sort((a, b) => a.price - b.price);
@@ -136,7 +139,7 @@ const CategoriesPage = () => {
         break;
     }
     return items;
-  }, [activeCategory, sortBy]);
+  }, [activeCategory, sortBy, products]);
 
   const totalPages = Math.ceil(filtered.length / PRODUCTS_PER_PAGE);
   const paginated = filtered.slice(
@@ -255,7 +258,7 @@ const CategoriesPage = () => {
                   ← All Categories
                 </button>
                 <p className="text-sm text-muted-foreground">
-                  {filtered.length} product{filtered.length !== 1 ? "s" : ""}
+                  {isLoading ? "Loading..." : `${filtered.length} product${filtered.length !== 1 ? "s" : ""}`}
                 </p>
               </div>
               <Select
@@ -278,7 +281,7 @@ const CategoriesPage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {paginated.map((product) => (
                 <ProductCard
-                  key={product.id}
+                  key={product.uuid}
                   product={product}
                   strainData={product.category === "Flowers" ? strainMap?.get(product.name.toLowerCase()) : undefined}
                 />
