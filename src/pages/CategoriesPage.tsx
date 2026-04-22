@@ -107,15 +107,18 @@ const CategoriesPage = () => {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
 
-  const initialCategory = urlCategory
+  const activeCategory = urlCategory
     ? categories.find(
         (c) => c.toLowerCase() === decodeURIComponent(urlCategory).toLowerCase()
       ) || null
     : null;
 
-  const [activeCategory, setActiveCategory] = useState<string | null>(initialCategory);
   const [sortBy, setSortBy] = useState<SortOption>("latest");
   const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    setPage(1);
+  }, [urlCategory]);
 
   const { data: strainMap } = useFlowerStrainData();
   const { data: products = [], isLoading } = useProducts();
