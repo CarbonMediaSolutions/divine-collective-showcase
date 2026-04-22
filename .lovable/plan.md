@@ -1,32 +1,21 @@
 
 
-# Fix browser back-button behavior on Shop pages
+# Update Social Media Links in Footer
 
-## The bug
-Right now the Shop page (`/categories`) uses internal React state to track which category is selected. Clicking a category card swaps the view but **doesn't change the URL** — it stays on `/categories`. So when you later go into a product and hit the browser's back button, it takes you all the way back to the category grid (skipping the product list view), because that view never got its own history entry.
+Replace the placeholder `#` hrefs in `src/components/Footer.tsx` with the real handles, and add a Facebook icon (currently missing).
 
-## The fix
-Drive the active category from the URL itself. When a user clicks a category card, actually navigate to `/categories/Flowers` (the route already exists in `App.tsx` — it's just never used). When they click "← All Categories", navigate back to `/categories`.
+## Links
 
-This way the browser history becomes:
-```
-/                 →  /categories  →  /categories/Accessories  →  /product/backwoods-honey-berry
-```
-And clicking back from the product correctly returns to `/categories/Accessories`, then back again returns to `/categories`, then back returns home — exactly what you'd expect.
+| Platform | Handle | URL |
+|---|---|---|
+| Instagram | @thedivinecollective__ | https://instagram.com/thedivinecollective__ |
+| TikTok | @the1divinecollective | https://tiktok.com/@the1divinecollective |
+| YouTube | @The1DivineCollective | https://youtube.com/@The1DivineCollective |
+| Facebook | @thedivinecollective__ | https://facebook.com/thedivinecollective__ |
 
-## Changes to `src/pages/CategoriesPage.tsx`
+## Changes to `src/components/Footer.tsx`
+1. Set `href` on each existing social `<a>` (TikTok, Instagram, YouTube) to the URLs above, with `target="_blank"` and `rel="noopener noreferrer"`.
+2. Add a new Facebook circle icon button after YouTube, matching the existing styling (same 8x8 circle, primary border, hover fill).
 
-1. **Remove the `activeCategory` `useState`.** Derive it directly from the `:category` URL param every render.
-2. **`handleCategoryClick(catName)`** → `navigate(`/categories/${encodeURIComponent(catName)}`)` instead of `setActiveCategory(...)`.
-3. **`handleBackToCategories()`** → `navigate('/categories')` instead of `setActiveCategory(null)`.
-4. **Reset `page` to 1** via a `useEffect` that watches `urlCategory`, so pagination resets correctly when the category changes.
-5. Keep the existing `ScrollToTop` behavior (already in `App.tsx`) so each navigation scrolls to top.
-
-No other files need to change. The route `/categories/:category` is already wired up in `App.tsx`.
-
-## What you'll notice after
-- URL bar updates to `/categories/Flowers` when you pick a category (also makes categories shareable/bookmarkable — bonus)
-- Browser back from a product page → returns to that category's product list
-- Browser back again → returns to the category grid
-- Browser back again → returns to the home page
+No other files affected.
 
