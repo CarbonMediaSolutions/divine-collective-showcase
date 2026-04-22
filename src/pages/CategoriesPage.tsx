@@ -191,13 +191,13 @@ const CategoriesPage = () => {
   }
 
   const handleCategoryClick = (catName: string) => {
-    setActiveCategory(catName);
+    navigate(`/categories/${encodeURIComponent(catName)}`);
     setPage(1);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleBackToCategories = () => {
-    setActiveCategory(null);
+    navigate("/categories");
     setPage(1);
   };
 
