@@ -61,6 +61,8 @@ const ProductsTab = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const [generating, setGenerating] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importReport, setImportReport] = useState<any | null>(null);
 
   const fetchProducts = async () => {
     const { data, error } = await supabase.from("products").select("*").order("name").limit(2000);
