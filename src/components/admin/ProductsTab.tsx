@@ -195,6 +195,29 @@ const ProductsTab = () => {
     }
   };
 
+  const handleImportFromWp = async () => {
+    if (!confirm("Import product images from the old WordPress site? This will only update products that don't already have a working image.")) return;
+    setImporting(true);
+    setImportReport(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("import-wp-media", {
+        body: { onlyMissing: true, dryRun: false },
+      });
+      if (error) throw new Error(error.message || "Failed");
+      if (data?.error) throw new Error(data.error);
+      setImportReport(data);
+      toast.success(
+        `Imported ${data.downloaded} images. ${data.fileMissing} matched but missing on server. ${data.noMatch} with no match.`,
+        { duration: 6000 },
+      );
+      fetchProducts();
+    } catch (err: any) {
+      toast.error(err.message || "Import failed");
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!form.name.trim()) { toast.error("Name is required"); return; }
     setSaving(true);
