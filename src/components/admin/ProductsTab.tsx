@@ -483,6 +483,47 @@ const ProductsTab = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!importReport} onOpenChange={(o) => !o && setImportReport(null)}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>WordPress Image Import Report</DialogTitle>
+          </DialogHeader>
+          {importReport && (
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-4 gap-2">
+                <div className="rounded border p-2"><div className="text-xs text-muted-foreground">Media scanned</div><div className="text-lg font-semibold">{importReport.mediaItems}</div></div>
+                <div className="rounded border p-2"><div className="text-xs text-muted-foreground">Downloaded</div><div className="text-lg font-semibold text-green-600">{importReport.downloaded}</div></div>
+                <div className="rounded border p-2"><div className="text-xs text-muted-foreground">File missing</div><div className="text-lg font-semibold text-amber-600">{importReport.fileMissing}</div></div>
+                <div className="rounded border p-2"><div className="text-xs text-muted-foreground">No match</div><div className="text-lg font-semibold text-muted-foreground">{importReport.noMatch}</div></div>
+              </div>
+              <div className="border rounded">
+                <div className="max-h-[50vh] overflow-y-auto">
+                  <table className="w-full text-xs">
+                    <thead className="bg-muted sticky top-0">
+                      <tr><th className="text-left p-2">Product</th><th className="text-left p-2">Category</th><th className="text-left p-2">Result</th></tr>
+                    </thead>
+                    <tbody>
+                      {(importReport.results || []).map((r: any, i: number) => (
+                        <tr key={i} className="border-t">
+                          <td className="p-2">{r.product}</td>
+                          <td className="p-2 text-muted-foreground">{r.category}</td>
+                          <td className="p-2">
+                            <Badge variant={r.action === "downloaded" ? "default" : r.action === "file_missing" ? "secondary" : "outline"} className="text-[10px]">
+                              {r.action.replace("_", " ")}
+                            </Badge>
+                            {r.error && <span className="ml-2 text-destructive">{r.error}</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
