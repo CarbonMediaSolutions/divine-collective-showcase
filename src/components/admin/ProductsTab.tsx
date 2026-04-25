@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Search, Plus, Edit2, Trash2, Upload, Sparkles } from "lucide-react";
+import { Search, Plus, Edit2, Trash2, Upload, Sparkles, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +61,8 @@ const ProductsTab = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const [generating, setGenerating] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importReport, setImportReport] = useState<any | null>(null);
 
   const fetchProducts = async () => {
     const { data, error } = await supabase.from("products").select("*").order("name").limit(2000);
@@ -193,6 +195,29 @@ const ProductsTab = () => {
     }
   };
 
+  const handleImportFromWp = async () => {
+    if (!confirm("Import product images from the old WordPress site? This will only update products that don't already have a working image.")) return;
+    setImporting(true);
+    setImportReport(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("import-wp-media", {
+        body: { onlyMissing: true, dryRun: false },
+      });
+      if (error) throw new Error(error.message || "Failed");
+      if (data?.error) throw new Error(data.error);
+      setImportReport(data);
+      toast.success(
+        `Imported ${data.downloaded} images. ${data.fileMissing} matched but missing on server. ${data.noMatch} with no match.`,
+        { duration: 6000 },
+      );
+      fetchProducts();
+    } catch (err: any) {
+      toast.error(err.message || "Import failed");
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!form.name.trim()) { toast.error("Name is required"); return; }
     setSaving(true);
@@ -274,6 +299,10 @@ const ProductsTab = () => {
           ))}
         </div>
         <span className="text-sm text-muted-foreground">{filtered.length} products</span>
+        <Button onClick={handleImportFromWp} size="sm" variant="outline" disabled={importing} className="gap-2">
+          <Download size={16} className={importing ? "animate-pulse" : ""} />
+          {importing ? "Importing..." : "Import images from WordPress"}
+        </Button>
         <Button onClick={openNew} size="sm" className="gap-2">
           <Plus size={16} /> Add Product
         </Button>
@@ -452,6 +481,47 @@ const ProductsTab = () => {
               <Button onClick={handleSave} disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!importReport} onOpenChange={(o) => !o && setImportReport(null)}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>WordPress Image Import Report</DialogTitle>
+          </DialogHeader>
+          {importReport && (
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-4 gap-2">
+                <div className="rounded border p-2"><div className="text-xs text-muted-foreground">Media scanned</div><div className="text-lg font-semibold">{importReport.mediaItems}</div></div>
+                <div className="rounded border p-2"><div className="text-xs text-muted-foreground">Downloaded</div><div className="text-lg font-semibold text-green-600">{importReport.downloaded}</div></div>
+                <div className="rounded border p-2"><div className="text-xs text-muted-foreground">File missing</div><div className="text-lg font-semibold text-amber-600">{importReport.fileMissing}</div></div>
+                <div className="rounded border p-2"><div className="text-xs text-muted-foreground">No match</div><div className="text-lg font-semibold text-muted-foreground">{importReport.noMatch}</div></div>
+              </div>
+              <div className="border rounded">
+                <div className="max-h-[50vh] overflow-y-auto">
+                  <table className="w-full text-xs">
+                    <thead className="bg-muted sticky top-0">
+                      <tr><th className="text-left p-2">Product</th><th className="text-left p-2">Category</th><th className="text-left p-2">Result</th></tr>
+                    </thead>
+                    <tbody>
+                      {(importReport.results || []).map((r: any, i: number) => (
+                        <tr key={i} className="border-t">
+                          <td className="p-2">{r.product}</td>
+                          <td className="p-2 text-muted-foreground">{r.category}</td>
+                          <td className="p-2">
+                            <Badge variant={r.action === "downloaded" ? "default" : r.action === "file_missing" ? "secondary" : "outline"} className="text-[10px]">
+                              {r.action.replace("_", " ")}
+                            </Badge>
+                            {r.error && <span className="ml-2 text-destructive">{r.error}</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
