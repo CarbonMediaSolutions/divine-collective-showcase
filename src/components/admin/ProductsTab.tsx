@@ -299,6 +299,10 @@ const ProductsTab = () => {
           ))}
         </div>
         <span className="text-sm text-muted-foreground">{filtered.length} products</span>
+        <Button onClick={handleImportFromWp} size="sm" variant="outline" disabled={importing} className="gap-2">
+          <Download size={16} className={importing ? "animate-pulse" : ""} />
+          {importing ? "Importing..." : "Import images from WordPress"}
+        </Button>
         <Button onClick={openNew} size="sm" className="gap-2">
           <Plus size={16} /> Add Product
         </Button>
