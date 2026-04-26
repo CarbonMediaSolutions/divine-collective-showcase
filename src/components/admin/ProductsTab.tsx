@@ -64,6 +64,8 @@ const ProductsTab = () => {
   const [generating, setGenerating] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importReport, setImportReport] = useState<any | null>(null);
+  const [forceReimport, setForceReimport] = useState(false);
+  const csvInputRef = useRef<HTMLInputElement>(null);
 
   const fetchProducts = async () => {
     const { data, error } = await supabase.from("products").select("*").order("name").limit(2000);
