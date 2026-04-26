@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
-import { Search, Plus, Edit2, Trash2, Upload, Sparkles, Download } from "lucide-react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { Search, Plus, Edit2, Trash2, Upload, Sparkles, FileUp } from "lucide-react";
+import Papa from "papaparse";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
