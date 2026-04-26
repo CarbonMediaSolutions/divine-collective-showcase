@@ -336,9 +336,31 @@ const ProductsTab = () => {
           ))}
         </div>
         <span className="text-sm text-muted-foreground">{filtered.length} products</span>
-        <Button onClick={handleImportFromWp} size="sm" variant="outline" disabled={importing} className="gap-2">
-          <Download size={16} className={importing ? "animate-pulse" : ""} />
-          {importing ? "Importing..." : "Import images from WordPress"}
+        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={forceReimport}
+            onChange={(e) => setForceReimport(e.target.checked)}
+            className="h-3.5 w-3.5"
+          />
+          Force re-import
+        </label>
+        <input
+          ref={csvInputRef}
+          type="file"
+          accept=".csv,text/csv"
+          className="hidden"
+          onChange={handleCsvFileSelected}
+        />
+        <Button
+          onClick={() => csvInputRef.current?.click()}
+          size="sm"
+          variant="outline"
+          disabled={importing}
+          className="gap-2"
+        >
+          <FileUp size={16} className={importing ? "animate-pulse" : ""} />
+          {importing ? "Importing..." : "Import images from CSV"}
         </Button>
         <Button onClick={openNew} size="sm" className="gap-2">
           <Plus size={16} /> Add Product
