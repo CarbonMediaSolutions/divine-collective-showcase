@@ -198,20 +198,54 @@ const ProductsTab = () => {
     }
   };
 
-  const handleImportFromWp = async () => {
-    if (!confirm("Import product images from the old WordPress site? This will only update products that don't already have a working image.")) return;
+  const handleCsvFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // reset so the same file can be picked again
+    if (!file) return;
+
     setImporting(true);
     setImportReport(null);
     try {
-      const { data, error } = await supabase.functions.invoke("import-wp-media", {
-        body: { onlyMissing: true, dryRun: false },
+      // Parse CSV in browser
+      const text = await file.text();
+      const parsed = Papa.parse<Record<string, string>>(text, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (h) => h.replace(/^\uFEFF/, "").trim(),
+      });
+
+      if (parsed.errors.length > 0) {
+        console.warn("CSV parse warnings:", parsed.errors.slice(0, 3));
+      }
+
+      // Build items: take first URL from "Images" column (comma-separated)
+      const items = (parsed.data || [])
+        .map((row) => {
+          const sku = (row["SKU"] || "").trim();
+          const imagesRaw = (row["Images"] || "").trim();
+          const firstImage = imagesRaw.split(/,\s*/)[0]?.trim() || "";
+          const name = (row["Name"] || "").trim();
+          return { sku, imageUrl: firstImage, name };
+        })
+        .filter((i) => i.sku);
+
+      if (items.length === 0) {
+        toast.error("No rows with a SKU found in this CSV");
+        return;
+      }
+
+      toast.info(`Uploading ${items.length} rows for matching...`);
+
+      const { data, error } = await supabase.functions.invoke("import-csv-images", {
+        body: { items, force: forceReimport },
       });
       if (error) throw new Error(error.message || "Failed");
       if (data?.error) throw new Error(data.error);
+
       setImportReport(data);
       toast.success(
-        `Imported ${data.downloaded} images. ${data.fileMissing} matched but missing on server. ${data.noMatch} with no match.`,
-        { duration: 6000 },
+        `Downloaded ${data.downloaded} images. ${data.skipped} skipped (already had image). ${data.failed} failed. ${data.notInDb} SKUs not in DB.`,
+        { duration: 8000 },
       );
       fetchProducts();
     } catch (err: any) {
