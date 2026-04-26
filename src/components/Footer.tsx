@@ -39,11 +39,11 @@ const Footer = () => {
               {sitemapLinks.map((l) => (
                 <li key={l.label}>
                   {"external" in l && l.external ? (
-                    <a href={l.to} target="_blank" rel="noopener noreferrer" className="text-primary text-sm hover:underline transition-colors duration-300">
+                    <a href={l.to} target="_blank" rel="noopener noreferrer" className="text-primary text-sm underline-offset-4 hover:underline hover:opacity-70 transition-opacity duration-200 cursor-pointer inline-block">
                       {l.label}
                     </a>
                   ) : (
-                    <Link to={l.to} className="text-primary text-sm hover:underline transition-colors duration-300">
+                    <Link to={l.to} className="text-primary text-sm underline-offset-4 hover:underline hover:opacity-70 transition-opacity duration-200 cursor-pointer inline-block">
                       {l.label}
                     </Link>
                   )}
