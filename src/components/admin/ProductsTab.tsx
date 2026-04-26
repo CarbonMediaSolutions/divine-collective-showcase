@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
-import { Search, Plus, Edit2, Trash2, Upload, Sparkles, Download } from "lucide-react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { Search, Plus, Edit2, Trash2, Upload, Sparkles, FileUp } from "lucide-react";
+import Papa from "papaparse";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +64,8 @@ const ProductsTab = () => {
   const [generating, setGenerating] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importReport, setImportReport] = useState<any | null>(null);
+  const [forceReimport, setForceReimport] = useState(false);
+  const csvInputRef = useRef<HTMLInputElement>(null);
 
   const fetchProducts = async () => {
     const { data, error } = await supabase.from("products").select("*").order("name").limit(2000);
@@ -195,20 +198,54 @@ const ProductsTab = () => {
     }
   };
 
-  const handleImportFromWp = async () => {
-    if (!confirm("Import product images from the old WordPress site? This will only update products that don't already have a working image.")) return;
+  const handleCsvFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // reset so the same file can be picked again
+    if (!file) return;
+
     setImporting(true);
     setImportReport(null);
     try {
-      const { data, error } = await supabase.functions.invoke("import-wp-media", {
-        body: { onlyMissing: true, dryRun: false },
+      // Parse CSV in browser
+      const text = await file.text();
+      const parsed = Papa.parse<Record<string, string>>(text, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (h) => h.replace(/^\uFEFF/, "").trim(),
+      });
+
+      if (parsed.errors.length > 0) {
+        console.warn("CSV parse warnings:", parsed.errors.slice(0, 3));
+      }
+
+      // Build items: take first URL from "Images" column (comma-separated)
+      const items = (parsed.data || [])
+        .map((row) => {
+          const sku = (row["SKU"] || "").trim();
+          const imagesRaw = (row["Images"] || "").trim();
+          const firstImage = imagesRaw.split(/,\s*/)[0]?.trim() || "";
+          const name = (row["Name"] || "").trim();
+          return { sku, imageUrl: firstImage, name };
+        })
+        .filter((i) => i.sku);
+
+      if (items.length === 0) {
+        toast.error("No rows with a SKU found in this CSV");
+        return;
+      }
+
+      toast.info(`Uploading ${items.length} rows for matching...`);
+
+      const { data, error } = await supabase.functions.invoke("import-csv-images", {
+        body: { items, force: forceReimport },
       });
       if (error) throw new Error(error.message || "Failed");
       if (data?.error) throw new Error(data.error);
+
       setImportReport(data);
       toast.success(
-        `Imported ${data.downloaded} images. ${data.fileMissing} matched but missing on server. ${data.noMatch} with no match.`,
-        { duration: 6000 },
+        `Downloaded ${data.downloaded} images. ${data.skipped} skipped (already had image). ${data.failed} failed. ${data.notInDb} SKUs not in DB.`,
+        { duration: 8000 },
       );
       fetchProducts();
     } catch (err: any) {
@@ -299,9 +336,31 @@ const ProductsTab = () => {
           ))}
         </div>
         <span className="text-sm text-muted-foreground">{filtered.length} products</span>
-        <Button onClick={handleImportFromWp} size="sm" variant="outline" disabled={importing} className="gap-2">
-          <Download size={16} className={importing ? "animate-pulse" : ""} />
-          {importing ? "Importing..." : "Import images from WordPress"}
+        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={forceReimport}
+            onChange={(e) => setForceReimport(e.target.checked)}
+            className="h-3.5 w-3.5"
+          />
+          Force re-import
+        </label>
+        <input
+          ref={csvInputRef}
+          type="file"
+          accept=".csv,text/csv"
+          className="hidden"
+          onChange={handleCsvFileSelected}
+        />
+        <Button
+          onClick={() => csvInputRef.current?.click()}
+          size="sm"
+          variant="outline"
+          disabled={importing}
+          className="gap-2"
+        >
+          <FileUp size={16} className={importing ? "animate-pulse" : ""} />
+          {importing ? "Importing..." : "Import images from CSV"}
         </Button>
         <Button onClick={openNew} size="sm" className="gap-2">
           <Plus size={16} /> Add Product
@@ -487,35 +546,48 @@ const ProductsTab = () => {
       <Dialog open={!!importReport} onOpenChange={(o) => !o && setImportReport(null)}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>WordPress Image Import Report</DialogTitle>
+            <DialogTitle>CSV Image Import Report</DialogTitle>
           </DialogHeader>
           {importReport && (
             <div className="space-y-3 text-sm">
-              <div className="grid grid-cols-4 gap-2">
-                <div className="rounded border p-2"><div className="text-xs text-muted-foreground">Media scanned</div><div className="text-lg font-semibold">{importReport.mediaItems}</div></div>
-                <div className="rounded border p-2"><div className="text-xs text-muted-foreground">Downloaded</div><div className="text-lg font-semibold text-green-600">{importReport.downloaded}</div></div>
-                <div className="rounded border p-2"><div className="text-xs text-muted-foreground">File missing</div><div className="text-lg font-semibold text-amber-600">{importReport.fileMissing}</div></div>
-                <div className="rounded border p-2"><div className="text-xs text-muted-foreground">No match</div><div className="text-lg font-semibold text-muted-foreground">{importReport.noMatch}</div></div>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                <div className="rounded border p-2"><div className="text-[10px] text-muted-foreground uppercase">CSV rows</div><div className="text-lg font-semibold">{importReport.csvRows}</div></div>
+                <div className="rounded border p-2"><div className="text-[10px] text-muted-foreground uppercase">Matched</div><div className="text-lg font-semibold">{importReport.matchedBySku}</div></div>
+                <div className="rounded border p-2"><div className="text-[10px] text-muted-foreground uppercase">Downloaded</div><div className="text-lg font-semibold text-green-600">{importReport.downloaded}</div></div>
+                <div className="rounded border p-2"><div className="text-[10px] text-muted-foreground uppercase">Skipped</div><div className="text-lg font-semibold text-amber-600">{importReport.skipped}</div></div>
+                <div className="rounded border p-2"><div className="text-[10px] text-muted-foreground uppercase">Failed</div><div className="text-lg font-semibold text-destructive">{importReport.failed}</div></div>
+                <div className="rounded border p-2"><div className="text-[10px] text-muted-foreground uppercase">Not in DB</div><div className="text-lg font-semibold text-muted-foreground">{importReport.notInDb}</div></div>
               </div>
               <div className="border rounded">
                 <div className="max-h-[50vh] overflow-y-auto">
                   <table className="w-full text-xs">
                     <thead className="bg-muted sticky top-0">
-                      <tr><th className="text-left p-2">Product</th><th className="text-left p-2">Category</th><th className="text-left p-2">Result</th></tr>
+                      <tr>
+                        <th className="text-left p-2">SKU</th>
+                        <th className="text-left p-2">Product</th>
+                        <th className="text-left p-2">Result</th>
+                      </tr>
                     </thead>
                     <tbody>
-                      {(importReport.results || []).map((r: any, i: number) => (
-                        <tr key={i} className="border-t">
-                          <td className="p-2">{r.product}</td>
-                          <td className="p-2 text-muted-foreground">{r.category}</td>
-                          <td className="p-2">
-                            <Badge variant={r.action === "downloaded" ? "default" : r.action === "file_missing" ? "secondary" : "outline"} className="text-[10px]">
-                              {r.action.replace("_", " ")}
-                            </Badge>
-                            {r.error && <span className="ml-2 text-destructive">{r.error}</span>}
-                          </td>
-                        </tr>
-                      ))}
+                      {(importReport.results || []).map((r: any, i: number) => {
+                        const variant =
+                          r.action === "downloaded" ? "default" :
+                          r.action === "skipped_has_image" ? "secondary" :
+                          r.action === "not_in_db" ? "outline" :
+                          "destructive";
+                        return (
+                          <tr key={i} className="border-t">
+                            <td className="p-2 font-mono text-[11px]">{r.sku}</td>
+                            <td className="p-2">{r.productName || r.csvName || "—"}</td>
+                            <td className="p-2">
+                              <Badge variant={variant as any} className="text-[10px]">
+                                {r.action.replace(/_/g, " ")}
+                              </Badge>
+                              {r.error && <span className="ml-2 text-destructive">{r.error}</span>}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

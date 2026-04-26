@@ -1,63 +1,82 @@
+# Import product images from WooCommerce CSV via SKU match
 
-# Pull product images from `tdc.carbonmediasolutions.com`
+## What I confirmed
 
-## What I checked
+The image URLs in your CSV use **`tdc1.carbonmediasolutions.com`** (with a **1** — different from the `tdc.` we tried last time). I tested one:
 
-I probed the site directly. Here's the actual situation:
+- `https://tdc1.carbonmediasolutions.com/wp-content/uploads/2025/01/IMG_6306-scaled.jpg` → **HTTP 200** ✅
+- HTTPS works (valid SSL cert this time, unlike the other subdomain)
 
-| Test | Result |
-|---|---|
-| `tdc.carbonmediasolutions.com` homepage | ✅ Up ("Site Under Construction" landing) |
-| WP REST API `/?rest_route=/wp/v2/media` | ✅ Works — **559 media items** indexed |
-| WooCommerce REST `/wc/v3/products` | 🔒 Returns 401 (needs API keys) |
-| `https://tdc...` (any URL) | ❌ Times out — **no valid SSL cert** on the subdomain |
-| `http://tdc.../wp-content/uploads/2025/01/IMG_6328-scaled.jpg` (original product photo) | ❌ 404 — file isn't on disk |
-| `http://tdc.../wp-content/uploads/2026/02/Untitled-design-...png` (newer upload) | ✅ exists |
+So this CSV is the right source. Even better: **every product in your DB has a SKU** (453/458) and **every CSV row has a SKU + image URL**. That means we can do an exact SKU join instead of the fuzzy name matching that failed before.
 
-So: the **media library still lists** the old 2025 product photos (gummies, vapes, accessories, etc.), but the actual image files for many older products were **not migrated** to the add-on hosting — only newer 2026 uploads survived. Some product images will be recoverable, others won't.
+The CSV has **143 products** with images. The `Images` column may contain multiple URLs separated by `, ` — we'll take the first one as the primary product image.
 
-The way to find out exactly which is to script it: query the REST API for every media item, try to fetch it over plain HTTP (HTTPS doesn't work — no cert), and download whatever returns 200.
+## The plan
 
-## The plan — one edge function
+### 1. Add a CSV upload button to `ProductsTab.tsx`
 
-Create **`supabase/functions/import-wp-media/index.ts`** that:
+Replace the previous "Import images from WordPress" button (which didn't work well) with:
 
-1. **Fetches the full media list** from `http://tdc.carbonmediasolutions.com/?rest_route=/wp/v2/media` paginated 100 at a time (X-WP-Total header says 559, so ~6 pages).
-2. For each media item, builds a normalized lookup name from the title and filename (lowercased, punctuation stripped) → maps to a `{ slug, source_url }` record.
-3. **Loads all products** from the DB where `image_url` is empty/broken (`''`, NULL, or contains `thedivinecollective.co.za`).
-4. For each such product, fuzzy-matches its `name` against the media lookup table:
-   - Try exact normalized name match first.
-   - Then "all words from product name appear in media title/filename" (handles WP's renamed files like `IMG_6328` not matching "Bubblegum Gummies").
-   - For Flowers, also try matching against the strain name.
-5. For each matched product, downloads the image over **HTTP** (force `http://`, since HTTPS has no cert), with a 10s timeout and `User-Agent` header.
-6. Uploads the bytes to the existing **`product-images`** Supabase Storage bucket (already public) at `${product.slug}-${timestamp}.${ext}`.
-7. Updates `products.image_url` to the new public Supabase URL.
-8. Returns a JSON report: `{ matched, downloaded, failed, skipped, missingFile, results: [...] }` — so we can see exactly which products got images, which the source file is dead for, and which had no match in the media library at all.
+> **"Import images from CSV"** — opens a file picker, accepts `.csv`
 
-The function uses the **service role key** (already in secrets), no auth required to invoke from admin. CORS configured for browser invocation.
+When you pick the file, the browser parses it client-side (no upload needed — it's only ~140 rows).
 
-## Trigger UI — small button in admin
+### 2. New edge function: `supabase/functions/import-csv-images/index.ts`
 
-Add a single button to **`src/components/admin/ProductsTab.tsx`** near the existing toolbar:
+Receives `{ items: [{ sku, imageUrl, name }, ...] }` from the browser. For each item:
 
-> **"Import images from WordPress"**
+1. Look up the product by **SKU** (exact match).
+2. Skip if not found, or if product already has a Supabase-hosted image (unless `force` is true).
+3. **Download the image** from `tdc1.carbonmediasolutions.com` over HTTPS (15s timeout, proper User-Agent, validate `Content-Type` starts with `image/` and size > 200 bytes).
+4. **Upload to Supabase Storage** bucket `product-images` at `${slug}-${timestamp}.${ext}`.
+5. **Update** `products.image_url` to the new public Supabase URL.
+6. Track per-row outcome.
 
-Click → invokes the edge function → shows a toast with the result counts → refetches the products query so new images appear immediately. A dialog displays the per-product result list (matched / file missing / no match) so you can see what's left.
+Returns:
+```json
+{
+  csvRows: 143,
+  matchedBySku: 138,
+  downloaded: 132,
+  failed: 6,
+  skipped: 5,         // already had good image
+  notInDb: 5,         // SKU in CSV but not in products table
+  results: [...]
+}
+```
 
-## What this will and won't fix
+### 3. Result dialog in admin
 
-✅ **Will fix**: Any product whose original image file was migrated to the add-on hosting (likely the newer 2026 items and a portion of the older ones).
+After the function finishes, show a dialog with:
+- Summary counts
+- Scrollable list of every row: ✅ downloaded / ⚠️ already had image / ❌ download failed / ❓ SKU not in DB
+- "Refresh products" button that re-runs the products query so new images appear immediately
 
-❌ **Won't fix**: Products where the file is missing on the server (REST says it exists, but `http://...` returns 404 — confirmed for `IMG_6328-scaled.jpg`). For those, you'll still need either Lightspeed sync or AI-generated placeholders. The function will report exactly which ones.
+### 4. Edge case handling
 
-❌ **Won't try HTTPS**: The subdomain has no SSL cert, so `https://tdc...` hangs. We force HTTP for the download. The re-hosted Supabase URLs are HTTPS and safe.
+- **CSV with multiple images per product**: Split the `Images` cell on `, ` and take the first. (We can add a v2 later that stores all images for a gallery.)
+- **CSV BOM**: Handle the `\ufeff` byte at the start of the file (visible in your CSV).
+- **CSV quoted fields**: Use a proper CSV parser (`papaparse` — small, well-tested) since the Description column contains tons of commas inside quotes.
+- **Products with no SKU in DB (5 of them)**: They'll fall into `notInDb` and be reported. You can manually map those later.
+- **Idempotent**: Re-running won't overwrite existing Supabase-hosted images unless you check a "Force re-import" box.
+
+### 5. Cleanup
+
+Remove the old "Import images from WordPress" button and the `import-wp-media` edge function — it didn't work and isn't worth keeping.
 
 ## Files touched
 
-- **NEW** `supabase/functions/import-wp-media/index.ts` — the importer
-- **EDIT** `src/components/admin/ProductsTab.tsx` — add the button + result dialog
-- No DB schema changes, no new buckets (uses existing `product-images`)
+- **NEW** `supabase/functions/import-csv-images/index.ts`
+- **EDIT** `src/components/admin/ProductsTab.tsx` — replace WP button with CSV upload + parsing + result dialog
+- **DELETE** `supabase/functions/import-wp-media/index.ts` (the failed attempt)
+- **ADD DEP** `papaparse` (~10KB) for robust CSV parsing
+
+No DB schema changes, no new buckets.
 
 ## What you'll do after
 
-Click the button in `/admin` → wait ~1–2 min while it crawls 559 media items and matches → review the report → for any products still without images, decide whether to leave them, sync Lightspeed, or generate AI placeholders.
+1. Go to `/admin` → Products tab.
+2. Click **"Import images from CSV"** → pick `wc-product-export-26-4-2026-1777197913596.csv`.
+3. Wait ~30–60s while it downloads ~140 images.
+4. Review the report. Should successfully populate ~140 of your 458 products.
+5. For the remaining ~315 products (likely the newer Lightspeed-only items), use the existing **Lightspeed Sync** button to pull those from your POS.
