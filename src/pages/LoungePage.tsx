@@ -57,7 +57,7 @@ const LoungePage = () => {
             </p>
           </div>
           <a
-            href="https://app.joinit.com/o/divine-collective/members"
+            href="https://app.joinit.com/o/divine-collective"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block border border-foreground text-foreground font-medium tracking-widest text-xs px-6 py-2.5 hover:bg-foreground hover:text-background transition-colors uppercase"

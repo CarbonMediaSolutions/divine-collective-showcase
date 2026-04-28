@@ -4,7 +4,7 @@ import { Minus, Plus, X, Lock, Check, Loader2, CheckCircle } from "lucide-react"
 import { useCart } from "@/contexts/CartContext";
 import { useMembership } from "@/contexts/MembershipContext";
 
-const JOINIT_URL = "https://app.joinit.com/o/divine-collective/members";
+const JOINIT_URL = "https://app.joinit.com/o/divine-collective";
 
 const CartPage = () => {
   const { items, removeFromCart, updateQuantity, cartTotal } = useCart();

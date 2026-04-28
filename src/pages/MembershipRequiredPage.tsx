@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Lock, Loader2, CheckCircle } from "lucide-react";
 import { useMembership } from "@/contexts/MembershipContext";
 
-const JOINIT_URL = "https://app.joinit.com/o/divine-collective/members";
+const JOINIT_URL = "https://app.joinit.com/o/divine-collective";
 
 const MembershipRequiredPage = () => {
   const { verifyWithJoinIt } = useMembership();

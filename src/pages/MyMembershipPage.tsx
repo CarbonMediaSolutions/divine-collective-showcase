@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Crown, Loader2, CheckCircle, ExternalLink } from "lucide-react";
 import { useMembership } from "@/contexts/MembershipContext";
 
-const JOINIT_URL = "https://app.joinit.com/o/divine-collective/members";
+const JOINIT_URL = "https://app.joinit.com/o/divine-collective";
 const JOINIT_PORTAL = "https://app.joinit.com/o/divine-collective";
 
 const MyMembershipPage = () => {
