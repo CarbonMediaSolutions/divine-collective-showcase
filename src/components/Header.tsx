@@ -4,7 +4,7 @@ import { Menu, X, ChevronDown } from "lucide-react";
 import Logo from "./Logo";
 import { useMembership } from "@/contexts/MembershipContext";
 
-const JOINIT_URL = "https://app.joinit.com/o/divine-collective/members";
+const JOINIT_URL = "https://app.joinit.com/o/divine-collective";
 const JOINIT_PORTAL = "https://app.joinit.com/o/divine-collective";
 
 const leftLinks = [

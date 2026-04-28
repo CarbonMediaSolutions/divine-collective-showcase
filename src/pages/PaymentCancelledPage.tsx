@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { XCircle } from "lucide-react";
 
-const JOINIT_URL = "https://app.joinit.com/o/divine-collective/members";
+const JOINIT_URL = "https://app.joinit.com/o/divine-collective";
 
 const PaymentCancelledPage = () => {
   const [searchParams] = useSearchParams();
