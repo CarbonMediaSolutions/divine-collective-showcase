@@ -406,6 +406,25 @@ const ProductsTab = () => {
         </Button>
       </div>
 
+      {selectedIds.size > 0 && (
+        <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
+          <span className="text-sm font-medium">{selectedIds.size} selected</span>
+          <span className="text-sm text-muted-foreground">Change category to:</span>
+          <Select value={bulkCategory} onValueChange={setBulkCategory}>
+            <SelectTrigger className="w-[180px] h-8"><SelectValue placeholder="Pick category" /></SelectTrigger>
+            <SelectContent>
+              {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button size="sm" onClick={handleBulkCategoryApply} disabled={!bulkCategory || bulkUpdating}>
+            {bulkUpdating ? "Applying..." : "Apply"}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => { setSelectedIds(new Set()); setBulkCategory(""); }}>
+            Clear
+          </Button>
+        </div>
+      )}
+
       {loading ? (
         <p className="text-muted-foreground text-sm">Loading products...</p>
       ) : (
@@ -413,9 +432,28 @@ const ProductsTab = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[40px]">
+                  {(() => {
+                    const visible = filtered.slice(0, 200);
+                    const allSelected = visible.length > 0 && visible.every((p) => selectedIds.has(p.id));
+                    return (
+                      <Checkbox
+                        checked={allSelected}
+                        onCheckedChange={(v) => {
+                          setSelectedIds((prev) => {
+                            const next = new Set(prev);
+                            if (v) visible.forEach((p) => next.add(p.id));
+                            else visible.forEach((p) => next.delete(p.id));
+                            return next;
+                          });
+                        }}
+                      />
+                    );
+                  })()}
+                </TableHead>
                 <TableHead>Image</TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
+                <TableHead className="w-[170px]">Category</TableHead>
                 <TableHead className="text-right">Price</TableHead>
                 <TableHead className="text-right">Sale</TableHead>
                 <TableHead>Visible</TableHead>
@@ -426,7 +464,10 @@ const ProductsTab = () => {
             </TableHeader>
             <TableBody>
               {filtered.slice(0, 200).map((p) => (
-                <TableRow key={p.id}>
+                <TableRow key={p.id} data-state={selectedIds.has(p.id) ? "selected" : undefined}>
+                  <TableCell>
+                    <Checkbox checked={selectedIds.has(p.id)} onCheckedChange={() => toggleSelect(p.id)} />
+                  </TableCell>
                   <TableCell>
                     {p.image_url ? (
                       <img src={p.image_url} alt={p.name} className="w-10 h-10 rounded object-cover" onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.2"; }} />
@@ -435,7 +476,14 @@ const ProductsTab = () => {
                     )}
                   </TableCell>
                   <TableCell className="font-medium max-w-[220px] truncate">{p.name}</TableCell>
-                  <TableCell><Badge variant="secondary" className="text-xs">{p.category}</Badge></TableCell>
+                  <TableCell>
+                    <Select value={p.category} onValueChange={(v) => handleCategoryChange(p, v)}>
+                      <SelectTrigger className="h-8 w-[160px] text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
                   <TableCell className="text-right">R{Number(p.price).toFixed(2)}</TableCell>
                   <TableCell className="text-right">{p.sale_price ? `R${Number(p.sale_price).toFixed(2)}` : "—"}</TableCell>
                   <TableCell><Switch checked={!!p.visible} onCheckedChange={() => handleToggle(p, "visible")} /></TableCell>
