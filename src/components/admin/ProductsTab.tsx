@@ -70,6 +70,48 @@ const ProductsTab = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkCategory, setBulkCategory] = useState<string>("");
   const [bulkUpdating, setBulkUpdating] = useState(false);
+  const [bulkGenDesc, setBulkGenDesc] = useState<{ running: boolean; done: number; total: number; failed: number }>({ running: false, done: 0, total: 0, failed: 0 });
+
+  const handleBulkGenerateDescriptions = async () => {
+    const targets = filtered.filter((p) => p.visible && (!p.description || p.description.trim().length < 20));
+    if (targets.length === 0) {
+      toast.info("All visible products already have descriptions");
+      return;
+    }
+    if (!confirm(`Generate AI descriptions for ${targets.length} visible product(s) with missing/short descriptions? This may take a few minutes.`)) return;
+
+    setBulkGenDesc({ running: true, done: 0, total: targets.length, failed: 0 });
+    let done = 0;
+    let failed = 0;
+
+    for (const p of targets) {
+      try {
+        const { data, error } = await supabase.functions.invoke("generate-product-description", {
+          body: { name: p.name, category: p.category },
+        });
+        if (error) throw new Error(error.message);
+        if (data?.error) throw new Error(data.error);
+        const desc = (data?.description || "").trim();
+        if (desc) {
+          const { error: upErr } = await supabase.from("products").update({ description: desc }).eq("id", p.id);
+          if (upErr) throw upErr;
+          setProducts((list) => list.map((x) => x.id === p.id ? { ...x, description: desc } : x));
+          done++;
+        } else {
+          failed++;
+        }
+      } catch (err) {
+        console.error("desc gen failed for", p.name, err);
+        failed++;
+      }
+      setBulkGenDesc((s) => ({ ...s, done: done + failed, failed }));
+      await new Promise((r) => setTimeout(r, 600));
+    }
+
+    setBulkGenDesc({ running: false, done: done + failed, total: targets.length, failed });
+    toast.success(`Generated ${done} description(s)${failed ? `, ${failed} failed` : ""}`);
+  };
+
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
@@ -400,6 +442,18 @@ const ProductsTab = () => {
         >
           <FileUp size={16} className={importing ? "animate-pulse" : ""} />
           {importing ? "Importing..." : "Import images from CSV"}
+        </Button>
+        <Button
+          onClick={handleBulkGenerateDescriptions}
+          size="sm"
+          variant="outline"
+          disabled={bulkGenDesc.running}
+          className="gap-2"
+        >
+          <Sparkles size={16} className={bulkGenDesc.running ? "animate-pulse" : ""} />
+          {bulkGenDesc.running
+            ? `Generating ${bulkGenDesc.done} / ${bulkGenDesc.total}...`
+            : "AI: Generate descriptions"}
         </Button>
         <Button onClick={openNew} size="sm" className="gap-2">
           <Plus size={16} /> Add Product
