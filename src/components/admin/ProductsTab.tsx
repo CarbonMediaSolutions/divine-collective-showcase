@@ -443,6 +443,18 @@ const ProductsTab = () => {
           <FileUp size={16} className={importing ? "animate-pulse" : ""} />
           {importing ? "Importing..." : "Import images from CSV"}
         </Button>
+        <Button
+          onClick={handleBulkGenerateDescriptions}
+          size="sm"
+          variant="outline"
+          disabled={bulkGenDesc.running}
+          className="gap-2"
+        >
+          <Sparkles size={16} className={bulkGenDesc.running ? "animate-pulse" : ""} />
+          {bulkGenDesc.running
+            ? `Generating ${bulkGenDesc.done} / ${bulkGenDesc.total}...`
+            : "AI: Generate descriptions"}
+        </Button>
         <Button onClick={openNew} size="sm" className="gap-2">
           <Plus size={16} /> Add Product
         </Button>
