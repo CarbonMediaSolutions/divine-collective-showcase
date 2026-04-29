@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import LightspeedPanel from "./LightspeedPanel";
@@ -66,6 +67,44 @@ const ProductsTab = () => {
   const [importReport, setImportReport] = useState<any | null>(null);
   const [forceReimport, setForceReimport] = useState(false);
   const csvInputRef = useRef<HTMLInputElement>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkCategory, setBulkCategory] = useState<string>("");
+  const [bulkUpdating, setBulkUpdating] = useState(false);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const handleCategoryChange = async (product: Product, newCategory: string) => {
+    if (newCategory === product.category) return;
+    const prev = product.category;
+    setProducts((list) => list.map((p) => p.id === product.id ? { ...p, category: newCategory } : p));
+    const { error } = await supabase.from("products").update({ category: newCategory }).eq("id", product.id);
+    if (error) {
+      toast.error("Failed to change category");
+      setProducts((list) => list.map((p) => p.id === product.id ? { ...p, category: prev } : p));
+    } else {
+      toast.success(`Moved "${product.name}" to ${newCategory}`);
+    }
+  };
+
+  const handleBulkCategoryApply = async () => {
+    if (!bulkCategory || selectedIds.size === 0) return;
+    if (!confirm(`Move ${selectedIds.size} product(s) to "${bulkCategory}"?`)) return;
+    setBulkUpdating(true);
+    const ids = Array.from(selectedIds);
+    const { error } = await supabase.from("products").update({ category: bulkCategory }).in("id", ids);
+    setBulkUpdating(false);
+    if (error) { toast.error("Bulk update failed"); return; }
+    toast.success(`Moved ${ids.length} product(s) to ${bulkCategory}`);
+    setSelectedIds(new Set());
+    setBulkCategory("");
+    fetchProducts();
+  };
 
   const fetchProducts = async () => {
     const { data, error } = await supabase.from("products").select("*").order("name").limit(2000);
@@ -367,6 +406,25 @@ const ProductsTab = () => {
         </Button>
       </div>
 
+      {selectedIds.size > 0 && (
+        <div className="flex flex-wrap items-center gap-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
+          <span className="text-sm font-medium">{selectedIds.size} selected</span>
+          <span className="text-sm text-muted-foreground">Change category to:</span>
+          <Select value={bulkCategory} onValueChange={setBulkCategory}>
+            <SelectTrigger className="w-[180px] h-8"><SelectValue placeholder="Pick category" /></SelectTrigger>
+            <SelectContent>
+              {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Button size="sm" onClick={handleBulkCategoryApply} disabled={!bulkCategory || bulkUpdating}>
+            {bulkUpdating ? "Applying..." : "Apply"}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => { setSelectedIds(new Set()); setBulkCategory(""); }}>
+            Clear
+          </Button>
+        </div>
+      )}
+
       {loading ? (
         <p className="text-muted-foreground text-sm">Loading products...</p>
       ) : (
@@ -374,9 +432,28 @@ const ProductsTab = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[40px]">
+                  {(() => {
+                    const visible = filtered.slice(0, 200);
+                    const allSelected = visible.length > 0 && visible.every((p) => selectedIds.has(p.id));
+                    return (
+                      <Checkbox
+                        checked={allSelected}
+                        onCheckedChange={(v) => {
+                          setSelectedIds((prev) => {
+                            const next = new Set(prev);
+                            if (v) visible.forEach((p) => next.add(p.id));
+                            else visible.forEach((p) => next.delete(p.id));
+                            return next;
+                          });
+                        }}
+                      />
+                    );
+                  })()}
+                </TableHead>
                 <TableHead>Image</TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
+                <TableHead className="w-[170px]">Category</TableHead>
                 <TableHead className="text-right">Price</TableHead>
                 <TableHead className="text-right">Sale</TableHead>
                 <TableHead>Visible</TableHead>
@@ -387,7 +464,10 @@ const ProductsTab = () => {
             </TableHeader>
             <TableBody>
               {filtered.slice(0, 200).map((p) => (
-                <TableRow key={p.id}>
+                <TableRow key={p.id} data-state={selectedIds.has(p.id) ? "selected" : undefined}>
+                  <TableCell>
+                    <Checkbox checked={selectedIds.has(p.id)} onCheckedChange={() => toggleSelect(p.id)} />
+                  </TableCell>
                   <TableCell>
                     {p.image_url ? (
                       <img src={p.image_url} alt={p.name} className="w-10 h-10 rounded object-cover" onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.2"; }} />
@@ -396,7 +476,14 @@ const ProductsTab = () => {
                     )}
                   </TableCell>
                   <TableCell className="font-medium max-w-[220px] truncate">{p.name}</TableCell>
-                  <TableCell><Badge variant="secondary" className="text-xs">{p.category}</Badge></TableCell>
+                  <TableCell>
+                    <Select value={p.category} onValueChange={(v) => handleCategoryChange(p, v)}>
+                      <SelectTrigger className="h-8 w-[160px] text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
                   <TableCell className="text-right">R{Number(p.price).toFixed(2)}</TableCell>
                   <TableCell className="text-right">{p.sale_price ? `R${Number(p.sale_price).toFixed(2)}` : "—"}</TableCell>
                   <TableCell><Switch checked={!!p.visible} onCheckedChange={() => handleToggle(p, "visible")} /></TableCell>
