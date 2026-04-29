@@ -67,6 +67,44 @@ const ProductsTab = () => {
   const [importReport, setImportReport] = useState<any | null>(null);
   const [forceReimport, setForceReimport] = useState(false);
   const csvInputRef = useRef<HTMLInputElement>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkCategory, setBulkCategory] = useState<string>("");
+  const [bulkUpdating, setBulkUpdating] = useState(false);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const handleCategoryChange = async (product: Product, newCategory: string) => {
+    if (newCategory === product.category) return;
+    const prev = product.category;
+    setProducts((list) => list.map((p) => p.id === product.id ? { ...p, category: newCategory } : p));
+    const { error } = await supabase.from("products").update({ category: newCategory }).eq("id", product.id);
+    if (error) {
+      toast.error("Failed to change category");
+      setProducts((list) => list.map((p) => p.id === product.id ? { ...p, category: prev } : p));
+    } else {
+      toast.success(`Moved "${product.name}" to ${newCategory}`);
+    }
+  };
+
+  const handleBulkCategoryApply = async () => {
+    if (!bulkCategory || selectedIds.size === 0) return;
+    if (!confirm(`Move ${selectedIds.size} product(s) to "${bulkCategory}"?`)) return;
+    setBulkUpdating(true);
+    const ids = Array.from(selectedIds);
+    const { error } = await supabase.from("products").update({ category: bulkCategory }).in("id", ids);
+    setBulkUpdating(false);
+    if (error) { toast.error("Bulk update failed"); return; }
+    toast.success(`Moved ${ids.length} product(s) to ${bulkCategory}`);
+    setSelectedIds(new Set());
+    setBulkCategory("");
+    fetchProducts();
+  };
 
   const fetchProducts = async () => {
     const { data, error } = await supabase.from("products").select("*").order("name").limit(2000);
