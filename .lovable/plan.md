@@ -1,21 +1,22 @@
-## Add quick category change in Admin → Products
+## Master button: AI-generate descriptions for visible products
 
-The admin already lets you change a product's category from the Edit dialog. To make this faster, I'll add two improvements:
+Add a single button in Admin → Products that bulk-generates AI descriptions for all currently visible products that are missing one (or have a very short one).
 
-### 1. Inline category change in the products table
-- Replace the read-only category Badge in each row with a small Select dropdown listing all categories (Edibles, Flowers, Accessories, Concentrates, Vape Products, Preroll, Membership).
-- Changing it instantly updates the product in the database and refreshes the row.
-- Shows a toast confirming the move (e.g. "Moved 'Maui Wowie' to Flowers").
+### How it works
+- New button "AI: Generate descriptions" sits next to the existing "Import images from CSV" / "Add Product" buttons.
+- When clicked it picks all products in the current filtered list that:
+  - have `visible = true`, AND
+  - have an empty description OR a description shorter than 20 characters.
+- Shows a confirm dialog with the count: *"Generate AI descriptions for 47 visible product(s)?"*
+- Loops through them one at a time, calling the existing `generate-product-description` edge function (already deployed and tuned for the Divine Collective brand voice).
+- Saves each result to the database as it completes and updates the row inline.
+- Shows live progress on the button: *"Generating 12 / 47…"*
+- Throttles ~600ms between calls to avoid rate limits, and surfaces failures in a final toast: *"Generated 45 description(s), 2 failed"*.
 
-### 2. Bulk category change
-- Add a checkbox on each row plus a "Select all (filtered)" header checkbox.
-- When 1+ rows are selected, a small action bar appears above the table:
-  - "Change category to ▾ [Select]  Apply  ·  Clear selection"
-- Confirms before applying ("Move 12 products to Edibles?"), then updates them all in one batch and refreshes.
+### Scope rules
+- Operates on the **current filter** (so you can narrow to e.g. category = Edibles and run it on just those).
+- Skips products that already have a real description (won't overwrite existing copy).
+- No schema or edge-function changes — reuses the existing `generate-product-description` function.
 
-This pairs well with the broken-images list — you can quickly recategorise mis-tagged products (e.g. some "Accessories" that are actually Edibles like Backwoods).
-
-### Files to change
-- `src/components/admin/ProductsTab.tsx` — add inline category Select, multi-select state, bulk action bar, and the update handlers (uses existing `supabase.from("products").update(...)`).
-
-No DB schema changes; no new edge functions.
+### File changes
+- `src/components/admin/ProductsTab.tsx` — add bulk-generate state, handler, and the button.
