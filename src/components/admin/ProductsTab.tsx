@@ -547,16 +547,37 @@ const ProductsTab = () => {
             </TableHeader>
             <TableBody>
               {filtered.slice(0, 200).map((p) => (
-                <TableRow key={p.id} data-state={selectedIds.has(p.id) ? "selected" : undefined}>
+                <TableRow
+                  key={p.id}
+                  data-state={selectedIds.has(p.id) ? "selected" : undefined}
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; if (dragOverId !== p.id) setDragOverId(p.id); }}
+                  onDragLeave={(e) => { if (e.currentTarget.contains(e.relatedTarget as Node)) return; setDragOverId((cur) => cur === p.id ? null : cur); }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOverId(null);
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) handleRowImageDrop(p, file);
+                  }}
+                  className={dragOverId === p.id ? "ring-2 ring-primary ring-inset" : undefined}
+                >
                   <TableCell>
                     <Checkbox checked={selectedIds.has(p.id)} onCheckedChange={() => toggleSelect(p.id)} />
                   </TableCell>
                   <TableCell>
-                    {p.image_url ? (
-                      <img src={p.image_url} alt={p.name} className="w-10 h-10 rounded object-cover" onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.2"; }} />
-                    ) : (
-                      <div className="w-10 h-10 rounded bg-muted" />
-                    )}
+                    <div className="relative w-10 h-10">
+                      {p.image_url ? (
+                        <img src={p.image_url} alt={p.name} className="w-10 h-10 rounded object-cover" onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.2"; }} />
+                      ) : (
+                        <div className={`w-10 h-10 rounded bg-muted flex items-center justify-center text-[9px] text-muted-foreground ${dragOverId === p.id ? "border-2 border-dashed border-primary" : ""}`}>
+                          {dragOverId === p.id ? "Drop" : ""}
+                        </div>
+                      )}
+                      {uploadingId === p.id && (
+                        <div className="absolute inset-0 rounded bg-background/70 flex items-center justify-center">
+                          <div className="h-3 w-3 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                        </div>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="font-medium max-w-[220px] truncate">{p.name}</TableCell>
                   <TableCell>
