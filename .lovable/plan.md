@@ -1,29 +1,32 @@
-## Import Zootley supplier images for all Zootley products
+## Import Puffco product images
 
-I've already scraped the supplier site (`zootlywholesale.co.za/product-category/cbd-edibles/`) and found 11 distinct supplier images. The supplier doesn't carry separate photos for the 35mg/60mg/100mg fudge variants — they share one fudge photo. Same for chocolate.
+Bring in product photography from puffco.com for these 9 products (replacing the current Divine Lighting Test shoot images on each):
 
-### Mapping (all 14 Zootley products)
+| # | Product (in our DB) | Puffco source page | Variant |
+|---|---|---|---|
+| 1 | Puffco - Ryan Fitt Recycler Glass 2.0 | `/products/ryan-fitt-recycler-glass-2-0` | default |
+| 2 | Puffco - Peak Pro Travel Glass | `/products/puffco-travel-glass` | clear |
+| 3 | Puffco - Proxy Wizard (Black) | `/products/proxy-wizard` | Onyx |
+| 4 | Puffco - Proxy Wizard (Desert) | `/products/proxy-wizard-haze` | Haze |
+| 5 | Puffco - Proxy Travel Bag (Black) | `/products/proxybag` | Onyx |
+| 6 | Puffco - Proxy Travel Bag (Desert) | `/products/colorbags` | Desert |
+| 7 | Puffco - Proxy Kit (Black) | `/products/proxy-kit` | Onyx |
+| 8 | Puffco - Proxy Kit (Bloom) | `/products/proxy-kit` | Bloom variant |
+| 9 | Puffco - Proxy Kit (Desert) | `/products/proxy-kit-haze` | Haze (desert-toned) |
+| 10 | Puffco - Proxy Ripple Sage | `/products/proxy-pipe` | Ripple Sage variant |
+| 11 | Puffco - Hot Knife (Bloom / Dessert / Flourish) | `/products/the-puffco-hot-knife` | V2 Onyx (old colour variants discontinued by Puffco — will use closest available) |
 
-| Product | Supplier image |
-|---|---|
-| Zootly Bon Bon - Cherry Kush | Bon-Bons_Cherry-Kush.jpg |
-| Zootly Bon Bon - Strawberry and Cream | Bon-Bons_Strawberries-and-Cream.jpg |
-| Zootly Bon Bon - Tuttie Fruity | Bon-Bons_Tutti-Fruity.jpg |
-| Zootley Jellie Jar - Sour Apple | CBD-Jellies_OPEN_Sour-Apple.jpg |
-| Zootley Jellie Jar - Tropical Fruit | CBD-Jellies_OPEN_Tropical-Fruit.jpg |
-| Zootley Jellie Jar - Tuttie Fruity | CBD-Jellies_OPEN_Tutti-Fruity.jpg |
-| Zootly Jellies - Sour Apple (20mg) | Jellies-Sachet_Sour-Apple.jpg |
-| Zootly Jellies - Tuttie Fruity (10mg) | Jellies-Sachet_Tutti-Fruity-1.jpg |
-| Zootly Jellies - Tropical Fruit (40mg) | CBD-Jellies_OPEN_Tropical-Fruit.jpg (no sachet variant) |
-| Zootly Jellies (generic) | Jellies-Sachet_Tutti-Fruity-1.jpg |
-| Zootley Vanilla Fudge - 35mg / 60mg / 100mg | Edibles_open-container_Fudge-v2.jpg (shared) |
-| Zootly Belgian Chocolate | Jolly-Choc.webp |
+### Approach
 
-### Steps
-1. Create a one-off edge function `import-zootly-images` that downloads each supplier image, uploads it to the `product-images` bucket under `zootly/`, and updates the matching product's `image_url`.
-2. Deploy and invoke it once.
-3. Delete the function after it runs (it's a one-shot).
-4. Report back with the list of 14 updated products and their new URLs.
+1. Scrape each Puffco product page above and pick the cleanest hero/front-facing image (preferring "front" or "3quarters" angles on a transparent/white background).
+2. Download all selected images to a temp folder.
+3. Upload them to the existing `product-images` Supabase storage bucket under a `puffco/` prefix (e.g. `puffco/proxy-wizard-onyx.png`).
+4. Update each product row's `image_url` in the `products` table to the new public storage URL.
+5. Clean up temp files.
 
-### File changes
-- Add (then remove) `supabase/functions/import-zootly-images/index.ts`. No frontend code touched.
+### Caveats
+
+- **Hot Knife colour variants (Bloom / Dessert / Flourish / Paradise Blue / Pearl)** are no longer sold by Puffco — only the V2 Onyx exists on their site. I'll use the V2 image for all three visible Hot Knife products (it won't reflect the original colour). If you'd rather keep your existing Divine photos for these, say so.
+- **Proxy Wizard (Desert)** — Puffco sells a "Haze" colourway which is the closest match to desert; will use that.
+- **Proxy Ripple Sage** — sourced from the Proxy Pipe page's Ripple Sage variant.
+- All current Divine Lighting Test shoot images will be replaced. They'll remain in storage if you ever want to revert.
