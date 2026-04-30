@@ -1,22 +1,22 @@
-## Master button: AI-generate descriptions for visible products
+## Match uploaded images to products
 
-Add a single button in Admin → Products that bulk-generates AI descriptions for all currently visible products that are missing one (or have a very short one).
+Final mapping confirmed by you:
 
-### How it works
-- New button "AI: Generate descriptions" sits next to the existing "Import images from CSV" / "Add Product" buttons.
-- When clicked it picks all products in the current filtered list that:
-  - have `visible = true`, AND
-  - have an empty description OR a description shorter than 20 characters.
-- Shows a confirm dialog with the count: *"Generate AI descriptions for 47 visible product(s)?"*
-- Loops through them one at a time, calling the existing `generate-product-description` edge function (already deployed and tuned for the Divine Collective brand voice).
-- Saves each result to the database as it completes and updates the row inline.
-- Shows live progress on the button: *"Generating 12 / 47…"*
-- Throttles ~600ms between calls to avoid rate limits, and surfaces failures in a final toast: *"Generated 45 description(s), 2 failed"*.
+| Uploaded file | Matched product | Category |
+|---|---|---|
+| `45964.jpg` | OCB Plant Grinder | Accessories |
+| `411280022_5-2048x1800.webp` | Gizeh - King Size Slim Unbleached + Tips | Accessories |
+| `IMG_0725-1152x1536.jpg` (Oreo Brownie) | **Jane's Brownie Bites** | Edibles |
+| `IMG_0727-1152x1536.jpg` | Jane's Fudge Cookie Crunch | Edibles |
+| `IMG_0728-1152x1536.jpg` | Jane's Death by Chocolate Cups | Edibles |
+| `IMG_0730-1152x1536.jpg` | Janes Vegan Peanutbutter Cookies | Edibles |
+| `IMG_0731-1152x1536.jpg` | Jane's Vegan Biscoff Brownie Bite | Edibles |
+| `IMG_0731-1-1152x1536.jpg` | (skip — duplicate of Biscoff) | — |
 
-### Scope rules
-- Operates on the **current filter** (so you can narrow to e.g. category = Edibles and run it on just those).
-- Skips products that already have a real description (won't overwrite existing copy).
-- No schema or edge-function changes — reuses the existing `generate-product-description` function.
+### Steps
+1. Copy each upload from `user-uploads://` to `/tmp/`.
+2. Upload to the `product-images` Supabase storage bucket at `manual/{slug}.{ext}` using the service role key (via a one-off script).
+3. Update `products.image_url` for each of the 7 matched products to the new public URL via a migration.
+4. Confirm with a list of updated products and their new image URLs.
 
-### File changes
-- `src/components/admin/ProductsTab.tsx` — add bulk-generate state, handler, and the button.
+No source files modified — data + storage only.
