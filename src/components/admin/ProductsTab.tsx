@@ -618,11 +618,26 @@ const ProductsTab = () => {
           <div className="grid gap-4 py-2">
             <div>
               <Label>Image</Label>
-              <div className="flex items-center gap-4 mt-1">
+              <div
+                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; setDialogDragOver(true); }}
+                onDragLeave={(e) => { if (e.currentTarget.contains(e.relatedTarget as Node)) return; setDialogDragOver(false); }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDialogDragOver(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (!file) return;
+                  if (!file.type.startsWith("image/")) { toast.error("Please drop an image file"); return; }
+                  setImageFile(file);
+                  setImagePreview(URL.createObjectURL(file));
+                }}
+                className={`flex items-center gap-4 mt-1 p-3 rounded-md border-2 border-dashed transition-colors ${dialogDragOver ? "border-primary bg-primary/5" : "border-border/40"}`}
+              >
                 {imagePreview ? (
                   <img src={imagePreview} alt="Preview" className="w-20 h-20 rounded object-cover" />
                 ) : (
-                  <div className="w-20 h-20 rounded bg-muted flex items-center justify-center text-muted-foreground text-xs">No image</div>
+                  <div className="w-20 h-20 rounded bg-muted flex items-center justify-center text-muted-foreground text-xs text-center px-1">
+                    {dialogDragOver ? "Drop image" : "No image"}
+                  </div>
                 )}
                 <label className="cursor-pointer">
                   <div className="flex items-center gap-2 px-3 py-2 rounded-md border text-sm hover:bg-accent transition-colors">
@@ -640,7 +655,9 @@ const ProductsTab = () => {
                   className="flex-1"
                 />
               </div>
+              <p className="text-[11px] text-muted-foreground mt-1">Tip: drag an image file here, or onto any product row in the table.</p>
             </div>
+
 
             <div className="grid grid-cols-2 gap-3">
               <div>
