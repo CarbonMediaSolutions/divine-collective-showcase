@@ -1,22 +1,29 @@
-## Match uploaded images to products
+## Import Zootley supplier images for all Zootley products
 
-Final mapping confirmed by you:
+I've already scraped the supplier site (`zootlywholesale.co.za/product-category/cbd-edibles/`) and found 11 distinct supplier images. The supplier doesn't carry separate photos for the 35mg/60mg/100mg fudge variants — they share one fudge photo. Same for chocolate.
 
-| Uploaded file | Matched product | Category |
-|---|---|---|
-| `45964.jpg` | OCB Plant Grinder | Accessories |
-| `411280022_5-2048x1800.webp` | Gizeh - King Size Slim Unbleached + Tips | Accessories |
-| `IMG_0725-1152x1536.jpg` (Oreo Brownie) | **Jane's Brownie Bites** | Edibles |
-| `IMG_0727-1152x1536.jpg` | Jane's Fudge Cookie Crunch | Edibles |
-| `IMG_0728-1152x1536.jpg` | Jane's Death by Chocolate Cups | Edibles |
-| `IMG_0730-1152x1536.jpg` | Janes Vegan Peanutbutter Cookies | Edibles |
-| `IMG_0731-1152x1536.jpg` | Jane's Vegan Biscoff Brownie Bite | Edibles |
-| `IMG_0731-1-1152x1536.jpg` | (skip — duplicate of Biscoff) | — |
+### Mapping (all 14 Zootley products)
+
+| Product | Supplier image |
+|---|---|
+| Zootly Bon Bon - Cherry Kush | Bon-Bons_Cherry-Kush.jpg |
+| Zootly Bon Bon - Strawberry and Cream | Bon-Bons_Strawberries-and-Cream.jpg |
+| Zootly Bon Bon - Tuttie Fruity | Bon-Bons_Tutti-Fruity.jpg |
+| Zootley Jellie Jar - Sour Apple | CBD-Jellies_OPEN_Sour-Apple.jpg |
+| Zootley Jellie Jar - Tropical Fruit | CBD-Jellies_OPEN_Tropical-Fruit.jpg |
+| Zootley Jellie Jar - Tuttie Fruity | CBD-Jellies_OPEN_Tutti-Fruity.jpg |
+| Zootly Jellies - Sour Apple (20mg) | Jellies-Sachet_Sour-Apple.jpg |
+| Zootly Jellies - Tuttie Fruity (10mg) | Jellies-Sachet_Tutti-Fruity-1.jpg |
+| Zootly Jellies - Tropical Fruit (40mg) | CBD-Jellies_OPEN_Tropical-Fruit.jpg (no sachet variant) |
+| Zootly Jellies (generic) | Jellies-Sachet_Tutti-Fruity-1.jpg |
+| Zootley Vanilla Fudge - 35mg / 60mg / 100mg | Edibles_open-container_Fudge-v2.jpg (shared) |
+| Zootly Belgian Chocolate | Jolly-Choc.webp |
 
 ### Steps
-1. Copy each upload from `user-uploads://` to `/tmp/`.
-2. Upload to the `product-images` Supabase storage bucket at `manual/{slug}.{ext}` using the service role key (via a one-off script).
-3. Update `products.image_url` for each of the 7 matched products to the new public URL via a migration.
-4. Confirm with a list of updated products and their new image URLs.
+1. Create a one-off edge function `import-zootly-images` that downloads each supplier image, uploads it to the `product-images` bucket under `zootly/`, and updates the matching product's `image_url`.
+2. Deploy and invoke it once.
+3. Delete the function after it runs (it's a one-shot).
+4. Report back with the list of 14 updated products and their new URLs.
 
-No source files modified — data + storage only.
+### File changes
+- Add (then remove) `supabase/functions/import-zootly-images/index.ts`. No frontend code touched.
