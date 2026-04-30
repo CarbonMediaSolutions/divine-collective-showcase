@@ -71,6 +71,35 @@ const ProductsTab = () => {
   const [bulkCategory, setBulkCategory] = useState<string>("");
   const [bulkUpdating, setBulkUpdating] = useState(false);
   const [bulkGenDesc, setBulkGenDesc] = useState<{ running: boolean; done: number; total: number; failed: number }>({ running: false, done: 0, total: 0, failed: 0 });
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [dialogDragOver, setDialogDragOver] = useState(false);
+
+  const handleRowImageDrop = async (product: Product, file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please drop an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.warning("Image is larger than 5MB — uploading anyway");
+    }
+    setUploadingId(product.id);
+    const previousUrl = product.image_url;
+    try {
+      const url = await uploadImage(file, product.slug);
+      // optimistic
+      setProducts((list) => list.map((p) => p.id === product.id ? { ...p, image_url: url } : p));
+      const { error } = await supabase.from("products").update({ image_url: url }).eq("id", product.id);
+      if (error) throw error;
+      toast.success(`Image updated for ${product.name}`);
+    } catch (err: any) {
+      setProducts((list) => list.map((p) => p.id === product.id ? { ...p, image_url: previousUrl } : p));
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setUploadingId(null);
+      setDragOverId(null);
+    }
+  };
 
   const handleBulkGenerateDescriptions = async () => {
     const targets = filtered.filter((p) => p.visible && (!p.description || p.description.trim().length < 20));
@@ -518,16 +547,37 @@ const ProductsTab = () => {
             </TableHeader>
             <TableBody>
               {filtered.slice(0, 200).map((p) => (
-                <TableRow key={p.id} data-state={selectedIds.has(p.id) ? "selected" : undefined}>
+                <TableRow
+                  key={p.id}
+                  data-state={selectedIds.has(p.id) ? "selected" : undefined}
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; if (dragOverId !== p.id) setDragOverId(p.id); }}
+                  onDragLeave={(e) => { if (e.currentTarget.contains(e.relatedTarget as Node)) return; setDragOverId((cur) => cur === p.id ? null : cur); }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOverId(null);
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) handleRowImageDrop(p, file);
+                  }}
+                  className={dragOverId === p.id ? "ring-2 ring-primary ring-inset" : undefined}
+                >
                   <TableCell>
                     <Checkbox checked={selectedIds.has(p.id)} onCheckedChange={() => toggleSelect(p.id)} />
                   </TableCell>
                   <TableCell>
-                    {p.image_url ? (
-                      <img src={p.image_url} alt={p.name} className="w-10 h-10 rounded object-cover" onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.2"; }} />
-                    ) : (
-                      <div className="w-10 h-10 rounded bg-muted" />
-                    )}
+                    <div className="relative w-10 h-10">
+                      {p.image_url ? (
+                        <img src={p.image_url} alt={p.name} className="w-10 h-10 rounded object-cover" onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0.2"; }} />
+                      ) : (
+                        <div className={`w-10 h-10 rounded bg-muted flex items-center justify-center text-[9px] text-muted-foreground ${dragOverId === p.id ? "border-2 border-dashed border-primary" : ""}`}>
+                          {dragOverId === p.id ? "Drop" : ""}
+                        </div>
+                      )}
+                      {uploadingId === p.id && (
+                        <div className="absolute inset-0 rounded bg-background/70 flex items-center justify-center">
+                          <div className="h-3 w-3 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                        </div>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="font-medium max-w-[220px] truncate">{p.name}</TableCell>
                   <TableCell>
@@ -568,11 +618,26 @@ const ProductsTab = () => {
           <div className="grid gap-4 py-2">
             <div>
               <Label>Image</Label>
-              <div className="flex items-center gap-4 mt-1">
+              <div
+                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; setDialogDragOver(true); }}
+                onDragLeave={(e) => { if (e.currentTarget.contains(e.relatedTarget as Node)) return; setDialogDragOver(false); }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDialogDragOver(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (!file) return;
+                  if (!file.type.startsWith("image/")) { toast.error("Please drop an image file"); return; }
+                  setImageFile(file);
+                  setImagePreview(URL.createObjectURL(file));
+                }}
+                className={`flex items-center gap-4 mt-1 p-3 rounded-md border-2 border-dashed transition-colors ${dialogDragOver ? "border-primary bg-primary/5" : "border-border/40"}`}
+              >
                 {imagePreview ? (
                   <img src={imagePreview} alt="Preview" className="w-20 h-20 rounded object-cover" />
                 ) : (
-                  <div className="w-20 h-20 rounded bg-muted flex items-center justify-center text-muted-foreground text-xs">No image</div>
+                  <div className="w-20 h-20 rounded bg-muted flex items-center justify-center text-muted-foreground text-xs text-center px-1">
+                    {dialogDragOver ? "Drop image" : "No image"}
+                  </div>
                 )}
                 <label className="cursor-pointer">
                   <div className="flex items-center gap-2 px-3 py-2 rounded-md border text-sm hover:bg-accent transition-colors">
@@ -590,7 +655,9 @@ const ProductsTab = () => {
                   className="flex-1"
                 />
               </div>
+              <p className="text-[11px] text-muted-foreground mt-1">Tip: drag an image file here, or onto any product row in the table.</p>
             </div>
+
 
             <div className="grid grid-cols-2 gap-3">
               <div>
