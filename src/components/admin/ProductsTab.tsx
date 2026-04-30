@@ -71,6 +71,35 @@ const ProductsTab = () => {
   const [bulkCategory, setBulkCategory] = useState<string>("");
   const [bulkUpdating, setBulkUpdating] = useState(false);
   const [bulkGenDesc, setBulkGenDesc] = useState<{ running: boolean; done: number; total: number; failed: number }>({ running: false, done: 0, total: 0, failed: 0 });
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [dialogDragOver, setDialogDragOver] = useState(false);
+
+  const handleRowImageDrop = async (product: Product, file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please drop an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.warning("Image is larger than 5MB — uploading anyway");
+    }
+    setUploadingId(product.id);
+    const previousUrl = product.image_url;
+    try {
+      const url = await uploadImage(file, product.slug);
+      // optimistic
+      setProducts((list) => list.map((p) => p.id === product.id ? { ...p, image_url: url } : p));
+      const { error } = await supabase.from("products").update({ image_url: url }).eq("id", product.id);
+      if (error) throw error;
+      toast.success(`Image updated for ${product.name}`);
+    } catch (err: any) {
+      setProducts((list) => list.map((p) => p.id === product.id ? { ...p, image_url: previousUrl } : p));
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setUploadingId(null);
+      setDragOverId(null);
+    }
+  };
 
   const handleBulkGenerateDescriptions = async () => {
     const targets = filtered.filter((p) => p.visible && (!p.description || p.description.trim().length < 20));

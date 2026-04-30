@@ -1,32 +1,44 @@
-## Import Puffco product images
+## Enable drag-and-drop product images in the Admin Products tab
 
-Bring in product photography from puffco.com for these 9 products (replacing the current Divine Lighting Test shoot images on each):
+Right now images can only be added by clicking "Upload" inside the edit dialog. This adds drag-and-drop in two places, using the existing `product-images` Supabase storage bucket and `uploadImage` helper that's already in `ProductsTab.tsx`.
 
-| # | Product (in our DB) | Puffco source page | Variant |
-|---|---|---|---|
-| 1 | Puffco - Ryan Fitt Recycler Glass 2.0 | `/products/ryan-fitt-recycler-glass-2-0` | default |
-| 2 | Puffco - Peak Pro Travel Glass | `/products/puffco-travel-glass` | clear |
-| 3 | Puffco - Proxy Wizard (Black) | `/products/proxy-wizard` | Onyx |
-| 4 | Puffco - Proxy Wizard (Desert) | `/products/proxy-wizard-haze` | Haze |
-| 5 | Puffco - Proxy Travel Bag (Black) | `/products/proxybag` | Onyx |
-| 6 | Puffco - Proxy Travel Bag (Desert) | `/products/colorbags` | Desert |
-| 7 | Puffco - Proxy Kit (Black) | `/products/proxy-kit` | Onyx |
-| 8 | Puffco - Proxy Kit (Bloom) | `/products/proxy-kit` | Bloom variant |
-| 9 | Puffco - Proxy Kit (Desert) | `/products/proxy-kit-haze` | Haze (desert-toned) |
-| 10 | Puffco - Proxy Ripple Sage | `/products/proxy-pipe` | Ripple Sage variant |
-| 11 | Puffco - Hot Knife (Bloom / Dessert / Flourish) | `/products/the-puffco-hot-knife` | V2 Onyx (old colour variants discontinued by Puffco — will use closest available) |
+### 1. Drag onto a product row in the table
 
-### Approach
+In the products table (`src/components/admin/ProductsTab.tsx`, the image cell around line 525–531), make each row a drop target.
 
-1. Scrape each Puffco product page above and pick the cleanest hero/front-facing image (preferring "front" or "3quarters" angles on a transparent/white background).
-2. Download all selected images to a temp folder.
-3. Upload them to the existing `product-images` Supabase storage bucket under a `puffco/` prefix (e.g. `puffco/proxy-wizard-onyx.png`).
-4. Update each product row's `image_url` in the `products` table to the new public storage URL.
-5. Clean up temp files.
+- Drag any image file from your desktop onto a row → uploads to `product-images` bucket → updates that product's `image_url` in the DB → row thumbnail refreshes.
+- While dragging over a row, the row gets a primary-coloured ring/border so you can see where it'll land.
+- A small toast shows "Uploading…" then "Image updated for {product name}" (or an error toast on failure).
+- Optimistic update: thumbnail switches to the new image immediately; reverts on error.
 
-### Caveats
+### 2. Drag into the Add/Edit dialog
 
-- **Hot Knife colour variants (Bloom / Dessert / Flourish / Paradise Blue / Pearl)** are no longer sold by Puffco — only the V2 Onyx exists on their site. I'll use the V2 image for all three visible Hot Knife products (it won't reflect the original colour). If you'd rather keep your existing Divine photos for these, say so.
-- **Proxy Wizard (Desert)** — Puffco sells a "Haze" colourway which is the closest match to desert; will use that.
-- **Proxy Ripple Sage** — sourced from the Proxy Pipe page's Ripple Sage variant.
-- All current Divine Lighting Test shoot images will be replaced. They'll remain in storage if you ever want to revert.
+The image area in the dialog (around line 569–593) becomes a dashed drop zone:
+
+- Drag an image file anywhere onto the image preview / upload row → sets `imageFile` + `imagePreview` (same flow as the existing file picker).
+- The existing "Upload" button and "Or paste image URL" field stay as-is.
+- Visual: dashed border + "Drop image here" hint when a file is being dragged over the zone.
+
+### 3. Bulk drag onto the table (nice bonus)
+
+If you drag multiple files at once onto a row, only the first file is used for that row (keeps it predictable). A note in the empty-state area mentions: *"Tip: drag an image file onto any row to replace its photo."*
+
+### Technical details
+
+- Pure client-side: uses native HTML5 `onDragOver` / `onDragLeave` / `onDrop` handlers — no new dependencies.
+- Reuses the existing `uploadImage(file, slug)` function (uploads to `product-images` bucket, returns public URL).
+- After upload, calls `supabase.from("products").update({ image_url }).eq("id", p.id)` and updates local state.
+- Validates: only accepts `image/*` MIME types; rejects others with a toast.
+- File size guard: warn if > 5 MB (still allows upload, since the bucket has no hard cap configured).
+- No DB schema changes. No new edge functions. No new bucket — `product-images` already exists and is used by the current upload flow.
+- Adds a small `uploadingId` state so a row shows a spinner overlay while uploading.
+
+### Files touched
+
+- `src/components/admin/ProductsTab.tsx` — only file changed.
+
+### Out of scope
+
+- Reordering rows by drag (this is just images).
+- Multi-image / gallery per product (schema only has one `image_url`).
+- Drag-and-drop in the Strains tab — happy to add the same pattern there in a follow-up if you want.
